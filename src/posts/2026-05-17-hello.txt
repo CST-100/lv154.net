@@ -1,0 +1,5 @@
+hello, world
+
+this is a smoke-test post to verify the posts pipeline. you can
+use the full token DSL here: {g}green text{/g}, {d}dim text{/d},
+{trans}trans{/trans}, and [hyperlinks](https://lavieohana.com).
