@@ -1,11 +1,9 @@
-# Stage 1: build static site with Python
-FROM python:3.12-alpine AS build
-WORKDIR /app
-COPY src/ ./src/
-COPY build.py ./
-RUN python3 build.py
-
-# Stage 2: serve with nginx
 FROM nginx:alpine
-COPY --from=build /app/dist/ /usr/share/nginx/html/
+
+RUN apk add --no-cache git python3 ca-certificates tini rsync
+
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+ENTRYPOINT ["/sbin/tini", "--", "/usr/local/bin/entrypoint.sh"]

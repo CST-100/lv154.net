@@ -54,8 +54,26 @@ Pipeline lives in `build.py` (`render_source` → `render_inline`). `{systems}` 
 
 ## Deploy
 
-- **Primary (unraid)**: `docker-compose.yml` builds the image and registers Traefik labels for `lv154.net`/`www.lv154.net`. `src/status.json` is bind-mounted from the host so updates don't require a rebuild.
-- **Secondary (Dreamhost)**: `deploy.sh` rsyncs `dist/` to the configured Dreamhost path. Source env from a gitignored `.env` before running.
+- **Primary (unraid)**: self-updating container. The image bundles nginx + git + python3 + `entrypoint.sh`. On startup the container clones this repo, runs `build.py`, syncs `dist/` to the nginx webroot, then loops in the background pulling every `POLL_INTERVAL` seconds (default 300). Traefik routes `lv154.net`/`www.lv154.net` to it as before.
+- **Secondary (Dreamhost)**: `deploy.sh` rsyncs a locally-built `dist/` to the configured Dreamhost path. Source env from a gitignored `.env` before running.
+
+### How auto-deploy works
+
+- `git push` to `main` on GitHub → the unraid container picks up the new commit on its next poll (≤5 min) and rebuilds in place.
+- `docker restart lv154-site` forces an immediate pull + rebuild — useful if you want the update *now*.
+- Tail deploy events: `docker logs -f lv154-site`. Each redeploy logs the before/after SHA.
+- Tunable via env on the compose service: `REPO_URL`, `REPO_REF` (default `main`), `POLL_INTERVAL` (seconds).
+
+### What does *not* auto-update
+
+Only the *site source* is pulled at runtime. These are baked into the image and need a manual rebuild (`docker compose up -d --build` on the unraid host):
+
+- `Dockerfile`
+- `entrypoint.sh`
+- `nginx.conf`
+- `docker-compose.yml` (it's not even in the image — it lives on the host)
+
+When you change any of those, copy the new versions to `/mnt/user/appdata/lv154dotnet/` on unraid and run `docker compose up -d --build`.
 
 ## Notes / Gotchas
 

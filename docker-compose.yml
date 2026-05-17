@@ -16,11 +16,19 @@ services:
     restart: unless-stopped
     networks:
       - proxy
-    volumes:
-      # Bind-mount the live status file so a host-side cron can update it
-      # without rebuilding the image. Edit ./src/status.json on the host
-      # (or point the cron at it) and changes show up on next page load.
-      - ./src/status.json:/usr/share/nginx/html/status.json:ro
+    environment:
+      # Container self-updates from this repo every POLL_INTERVAL seconds.
+      # Push to REPO_REF on GitHub → live within ~POLL_INTERVAL. `docker
+      # restart lv154-site` forces an immediate pull + rebuild.
+      REPO_URL: https://github.com/CST-100/lv154.net.git
+      REPO_REF: main
+      POLL_INTERVAL: "300"
+    # If you ever need a live host-side status.json override (e.g. cron writes
+    # /mnt/user/appdata/lv154-status.json), uncomment the volume below. The
+    # container syncs the repo's status.json into the webroot, so this mount
+    # will shadow it.
+    # volumes:
+    #   - /mnt/user/appdata/lv154-status.json:/usr/share/nginx/html/status.json:ro
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
