@@ -1,0 +1,45 @@
+# lv154.net — static site behind traefik on unraid.
+#
+# >>> ADJUST THESE TO MATCH YOUR TRAEFIK SETUP <<<
+#   - network name (`proxy` is the unraid default; some use `traefik`)
+#   - entrypoint name (`websecure` is the most common https entrypoint)
+#   - certresolver name (`letsencrypt`, `myresolver`, etc.)
+#   - the host rule (currently `lv154.net` and `www.lv154.net`)
+# Check `docker network ls` and your existing traefik labels on another
+# container if unsure.
+
+services:
+  lv154:
+    build: .
+    image: lv154-site:latest
+    container_name: lv154-site
+    restart: unless-stopped
+    networks:
+      - proxy
+    volumes:
+      # Bind-mount the live status file so a host-side cron can update it
+      # without rebuilding the image. Edit ./src/status.json on the host
+      # (or point the cron at it) and changes show up on next page load.
+      - ./src/status.json:/usr/share/nginx/html/status.json:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      # Matches jekyll's old rule pattern so /xrpc (PDS) and /crash (crashwiki)
+      # keep routing to their own services. /_matrix and /_tuwunel have higher
+      # priority routers already, so no exclusion needed for them.
+      # Priority 100 beats the jekyll@file router (priority 66).
+      - "traefik.http.routers.lv154.rule=(Host(`lv154.net`) || Host(`www.lv154.net`)) && !PathPrefix(`/xrpc`) && !PathPrefix(`/crash`)"
+      - "traefik.http.routers.lv154.priority=100"
+      - "traefik.http.routers.lv154.entrypoints=https"
+      - "traefik.http.routers.lv154.tls=true"
+      - "traefik.http.routers.lv154.tls.certresolver=letsencrypt"
+      - "traefik.http.services.lv154.loadbalancer.server.port=80"
+      # Redirect www → apex
+      - "traefik.http.middlewares.lv154-www-redirect.redirectregex.regex=^https?://www\\.lv154\\.net/(.*)"
+      - "traefik.http.middlewares.lv154-www-redirect.redirectregex.replacement=https://lv154.net/$${1}"
+      - "traefik.http.middlewares.lv154-www-redirect.redirectregex.permanent=true"
+      - "traefik.http.routers.lv154.middlewares=lv154-www-redirect"
+
+networks:
+  proxy:
+    external: true

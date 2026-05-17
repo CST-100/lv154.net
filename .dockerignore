@@ -1,0 +1,10 @@
+dist/
+.env
+.git
+*.md
+deploy.sh
+htaccess
+Makefile
+docker-compose.yml
+.dockerignore
+Dockerfile

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{title}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=B612+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+body {
+  background: #070707;
+  margin: 0;
+  padding: 2rem 1.5rem;
+  display: flex;
+  justify-content: center;
+}
+pre {
+  font-family: 'B612 Mono', monospace;
+  /* Scale font-size down when viewport can't fit ~64 cols at 1rem.
+     B612 Mono advance is ~0.6em/char, so 64ch ≈ 39em; using /41 leaves
+     a small safety margin and accounts for the 68ch max-width. */
+  font-size: min(1rem, calc((100vw - 1.2rem) / 41));
+  line-height: 1.3;
+  color: #e0e0d8;
+  white-space: pre;
+  max-width: 68ch;
+  width: 100%;
+  margin: 0;
+}
+a { color: #58b8d8; text-decoration: none; }
+a:hover { color: #90d8f0; }
+.g { color: #40e080; }
+.d { color: #505848; }
+.ok { color: #40e080; }
+.idle { color: #c8a848; }
+.err { color: #e05050; }
+.hdr { color: #58d858; }
+.tb { color: #55CDFC; }
+.tp { color: #F7A8B8; }
+.tw { color: #FFFFFF; }
+@media (max-width: 640px) {
+  body { padding: 1rem 0.6rem; }
+}
+</style>
+</head>
+<body>
+<pre>
+<span class="hdr">.LV154 KLAX                                    1/1</span>
+<span class="hdr">DT KLAX <span id="ts">0000 0000</span>Z</span>
+<span class="hdr">FM lavie@lv154.net</span>
+<span class="hdr">- FREE TEXT -</span>
+{{nav}}
+<span class="d">================================================================</span>
+
+{{body}}
+
+<span class="d">================================================================</span>
+<span class="d">&lt;EOM&gt;</span>
+
+{{socials}}
+
+<span class="d">ACK</span>
+</pre>
+<script>
+(function() {
+  function pad(n) { return String(n).padStart(2, '0'); }
+  function updateTimestamp() {
+    var n = new Date();
+    document.getElementById('ts').textContent =
+      pad(n.getUTCMonth() + 1) + pad(n.getUTCDate()) + ' ' +
+      pad(n.getUTCHours()) + pad(n.getUTCMinutes());
+  }
+  updateTimestamp();
+  setInterval(updateTimestamp, 60000);
+
+  var sysEl = document.getElementById('systems-block');
+  if (!sysEl) return;
+
+  function fmtSeen(iso) {
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    return pad(d.getUTCMonth() + 1) + '/' + pad(d.getUTCDate()) +
+           ' ' + pad(d.getUTCHours()) + ':' + pad(d.getUTCMinutes()) + 'Z';
+  }
+  function pad_r(s, w) {
+    s = String(s);
+    while (s.length < w) s += ' ';
+    return s;
+  }
+  function pad_l(s, w) {
+    s = String(s);
+    while (s.length < w) s = ' ' + s;
+    return s;
+  }
+  function stateBadge(state) {
+    var label = state.toUpperCase();
+    var cls = state === 'ok' ? 'ok' : (state === 'idle' ? 'idle' : 'err');
+    return '<span class="' + cls + '">■ ' + label + '</span>';
+  }
+  function visLen(s) {
+    return s.replace(/<[^>]+>/g, '').replace(/&[a-z]+;/g, ' ').length;
+  }
+  function renderSystems(data) {
+    var out = [];
+    (data.systems || []).forEach(function(sys, i) {
+      if (i > 0) out.push('');
+      // line 1: "  {g}name{/g}             desc"
+      var nameSpan = '<span class="g">' + sys.name + '</span>';
+      var pre = '  ' + nameSpan;
+      var preVis = 2 + sys.name.length;
+      var pad = Math.max(1, 22 - preVis);
+      out.push(pre + ' '.repeat(pad) + (sys.desc || ''));
+      // line 2: state + last_seen/uptime, right-aligned to 64
+      var badge = stateBadge(sys.state);
+      var right = sys.uptime ? (sys.uptime + ' UPTIME') : (sys.last_seen ? fmtSeen(sys.last_seen) : '');
+      var left = '                     ' + badge;
+      var leftVis = 21 + 2 + sys.state.length; // "■ " is 2 chars visually
+      var sp = Math.max(3, 64 - leftVis - right.length);
+      out.push(left + ' '.repeat(sp) + right);
+      // services
+      if (sys.services && sys.services.length) {
+        var n = sys.services.length;
+        var ok = sys.services.filter(function(s){return s.state==='ok';}).length;
+        var hdr = '      services:';
+        var counter = '(' + ok + '/' + n + ' OK)';
+        var spHdr = Math.max(3, 64 - hdr.length - counter.length);
+        out.push(hdr + ' '.repeat(spHdr) + counter);
+        sys.services.forEach(function(svc) {
+          var label = '           - ' + svc.name;
+          var b = stateBadge(svc.state);
+          var bvLen = 2 + svc.state.length;
+          var sp2 = Math.max(1, 64 - label.length - bvLen);
+          out.push(label + ' '.repeat(sp2) + b);
+        });
+      }
+    });
+    var sep = '<span class="d">' + Array(32).fill('-').join(' ') + '</span>';
+    sysEl.innerHTML = sep + '\n\n// systems                                     <span class="d">06</span>\n\n' +
+      out.join('\n') + '\n\n' + sep;
+  }
+  function renderUnavailable() {
+    var sep = '<span class="d">' + Array(32).fill('-').join(' ') + '</span>';
+    sysEl.innerHTML = sep + '\n\n// systems                                     <span class="d">06</span>\n\n' +
+      '  <span class="err">STATUS UNAVAILABLE</span>\n\n' + sep;
+  }
+  fetch('/status.json', { cache: 'no-cache' })
+    .then(function(r) { return r.ok ? r.json() : Promise.reject(); })
+    .then(renderSystems)
+    .catch(renderUnavailable);
+})();
+</script>
+</body>
+</html>

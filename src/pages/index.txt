@@ -1,0 +1,120 @@
+//
+
+lavie ohana — (she/her, it/its)
+
+hi there, i'm lavie.
+
+helping build bridges to the stars by day,
+general-purpose nerd by night.
+
+
+// a little more about me                                     {d}01{/d}
+
+existing at the intersection of space, urbanism, photography,
+design, and a general love for things that move fast. los
+angeles native representing the 818 til the day i die. one of
+{trans}those{/trans} folks, if you couldn't already tell.
+
+
+// the story so far                                           {d}02{/d}
+
+started and led [a team called space scout](https://www.spacescout.info/) from 2019 until
+2023. broke some barriers, and the news about the [birth of a
+new lunar human spaceflight program](https://www.spacescout.info/2021/10/long-term-future-sls/), and [wrote about some
+test flights](https://medium.com/p/df3585d9e39d).
+
+also helped start a group called the [hot nozzle society](https://www.hotnozzlesociety.org/) in
+2021. did [some branding work](https://www.behance.net/gallery/167117365/Hot-Nozzle-Society-work), [designed](https://locprecision.com/collections/rockets-3-1-diameter/products/sky-fieri) and [flew](https://x.com/lavie154/status/1719034164220231807) some rockets,
+helped [organize some events](https://www.hotnozzlesociety.org/previousevents). on my own time, got level 1 and
+level 2 certified with the tripoli rocketry association
+(#28294). level 3? watch this space.
+
+joined a scrappy lil rocket company called [abl space systems](https://ablspacesystems.com/)
+in 2023. got to [shoot some hotfires](https://www.youtube.com/watch?v=bJiZKsII3HM), helped [take some cool
+photos](https://www.linkedin.com/feed/update/urn:li:activity:7146545723969351680/), poked at some test stands in the desert, and pursued
+a bunch of other cool opportunities. switched to the dark side
+leading into 2024 and had a fun time selling rockets and other
+cool tactically responsive space things with the strategic
+development team. got to tell the world about [a not-so-very-fun
+day](https://x.com/ablspacesystems/status/1828182472439611528). joined a bunch of friends on an [involuntary 2-month paid
+vacation](https://www.linkedin.com/feed/update/urn:li:activity:7235130720954826753/) in august 2024.
+
+since feb 2025, a few friends and i have been toying with a
+project called [{g}Blacklight{/g}](https://goblacklight.com). there's space lasers, optics,
+and all sorts of other cool stuff. we'll see where that goes –
+if you want to help keep the world running on time, hit my line
+and let's talk!
+
+
+// signal and noise                                           {d}03{/d}
+
+i talk a lot, some would say too much. i have a [medium page](https://lavieohana.medium.com/)
+where i rant about the space industry, public policy, and all
+sorts of other stuff.
+
+a few things along those lines i've written:
+[Starship IV: The Future](https://medium.com/@lavieohana/starship-iv-the-future-cc07c4b66544)                               2026-02-03
+[Starship III: Risk](https://lavieohana.medium.com/starship-iii-risk-8cb0adf24769)                                    2024-11-24
+[RS1 Flight 2 - Static Fire Update](https://x.com/longwalldefense/status/1828182472439611528/photo/1)                     2024-08-26
+[Starship II:  A Reprise](https://medium.com/@lavieohana/starship-ii-a-reprise-df3585d9e39d)                               2023-05-01
+[Starship I: Orbital Flight Test](https://medium.com/@lavieohana/starship-oft-thoughts-15573f6b9cea)                       2023-04-21
+[NASA moves to procure a 2nd lunar lander](https://www.spacescout.info/2022/09/second-lunar-lander-rfp/)              2022-09-17
+[NASA's long term vision for SLS](https://www.spacescout.info/2021/10/long-term-future-sls/)                       2021-10-26
+
+
+// things i've built                                          {d}04{/d}
+
+current project is {g}Purple Orchid{/g} – a 265 lbf N2O/E85 liquid
+rocket entirely self designed and built. inspired heavily by
+half cat rocketry's 1Cat/4. expecting flight soon enough…
+
+other things:
+
+– professionally, a whole lot of launch vehicle concept
+  development and CONOPS work. [something along these lines](https://blog.ablspacesystems.com/p/the-global-future-of-launch?utm_campaign=post&utm_medium=web)…
+– optical comms work in the ~single photon space. if you wanna
+  hear more, you know where to ask.
+– lots of previous rocketry projects, some experimental
+  propulsion work, lots of 3d printed rockets and silly builds.
+  some favorites: [not a pipe bomb](https://x.com/lavie154/status/1837274248026456540), [quark SV0](https://x.com/lavie154/status/1659769898237837312), [thermal runaway](https://pbs.twimg.com/media/FemquBCUAAYQXe2?format=jpg&name=4096x4096)
+
+
+// interests, other things, etc                               {d}05{/d}
+
+i'm generally a nerd for systems engineering and infrastructure.
+the way huge systems work is something i've always been trying
+to figure out, most of my interests are an extension of that.
+
+/ what i've been reading
+
+from an engineering perspective, [wayne hale's blog](https://waynehale.wordpress.com/) is a must.
+i think about [How to be a -10x Engineer](https://taylor.town/-10x) a lot.
+on a more personal/fun level, a couple good reads:
+– my friend nik's [Proxima: A Human Exploration of Mars](https://www.alternatehistory.com/forum/threads/proxima-a-human-exploration-of-mars.520416/)
+– been enjoying [Katalepsis](https://katalepsis.net/) by heather young a lot lately
+  (cw: horror!)
+– if you want to understand my home (los angeles), Everything
+  Now by rosecrans baldwin is a must read.
+
+/ what i'm listening to
+
+usually a mix of a whole lot of things. [emperor x](https://crmatheny.net/board/) remains my
+favorite of all time. but i'll listen to anything. lately:
+magdalena bay, the mountain goats, rush, dutch uncles, subsonic
+eye, origami angel, everything everything. regrettably, i like
+coldplay.
+
+/ games
+
+haven't been playing much lately, but have always had a soft
+spot in my heart for kerbal space program (duh). forever a
+temporarily retired EVE online second lifer. i'm in Celeste,
+if you [know where to look](https://x.com/PowerUpAudio/status/1172338982916513793/photo/3). risk of rain 1, cities skylines, and
+a few others.
+
+{systems}
+
+/ credits
+
+you know who you are, and thank you :)
+AA AB AM AP CR CV CW EX JD LD MW NA SC SO TE

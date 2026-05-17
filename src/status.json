@@ -1,0 +1,29 @@
+{
+  "_note": "services arrays omitted until per-service monitoring is wired up. schema supports a 'services': [{name, state}] array on any system; renderer auto-shows it when present.",
+  "systems": [
+    {
+      "name": "cygnus",
+      "desc": "server, unRAID, i7 8700K, 16G",
+      "state": "ok",
+      "last_seen": "2026-05-04T14:20Z"
+    },
+    {
+      "name": "delta-IV",
+      "desc": "Framework 13, i7-1360P, 32G",
+      "state": "idle",
+      "last_seen": "2026-04-28T09:15Z"
+    },
+    {
+      "name": "delta-III",
+      "desc": "old laptop, i7-8565U, 16G",
+      "state": "ok",
+      "last_seen": "2026-05-04T14:22Z"
+    },
+    {
+      "name": "kestrel",
+      "desc": "ads-b in + dns, rpi 3B+, 1G",
+      "state": "ok",
+      "uptime": "47D"
+    }
+  ]
+}
