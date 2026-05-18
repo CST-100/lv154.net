@@ -11,6 +11,8 @@ import html
 import json
 import re
 import shutil
+import time
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).parent
@@ -91,6 +93,12 @@ def output_path(slug: str) -> Path:
     return DIST / "index.html" if slug == "index" else DIST / slug / "index.html"
 
 
+def build_stamp() -> str:
+    epoch = int(time.time())
+    iso = datetime.fromtimestamp(epoch, tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return f"{epoch}({iso})"
+
+
 def render_page(template: str, config: dict, current_slug: str, body: str) -> str:
     nav_html = render_nav(config["nav"], current_slug)
     socials_html = render_inline(html.escape(config.get("socials", ""), quote=False))
@@ -98,7 +106,8 @@ def render_page(template: str, config: dict, current_slug: str, body: str) -> st
             .replace("{{title}}", html.escape(config.get("title", "")))
             .replace("{{nav}}", nav_html)
             .replace("{{body}}", body)
-            .replace("{{socials}}", socials_html))
+            .replace("{{socials}}", socials_html)
+            .replace("{{built}}", build_stamp()))
 
 
 def build_page(slug: str, config: dict, template: str) -> None:
