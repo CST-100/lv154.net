@@ -54,12 +54,12 @@ sorts of other stuff.
 
 a few things along those lines i've written:
 [Starship IV: The Future](https://medium.com/@lavieohana/starship-iv-the-future-cc07c4b66544){d}...............................{/d}2026-02-03
-[Starship III: Risk](https://lavieohana.medium.com/starship-iii-risk-8cb0adf24769)                                    2024-11-24
-[RS1 Flight 2 - Static Fire Update](https://x.com/longwalldefense/status/1828182472439611528/photo/1)                     2024-08-26
-[Starship II:  A Reprise](https://medium.com/@lavieohana/starship-ii-a-reprise-df3585d9e39d)                               2023-05-01
-[Starship I: Orbital Flight Test](https://medium.com/@lavieohana/starship-oft-thoughts-15573f6b9cea)                       2023-04-21
-[NASA moves to procure a 2nd lunar lander](https://www.spacescout.info/2022/09/second-lunar-lander-rfp/)              2022-09-17
-[NASA's long term vision for SLS](https://www.spacescout.info/2021/10/long-term-future-sls/)                       2021-10-26
+[Starship III: Risk](https://lavieohana.medium.com/starship-iii-risk-8cb0adf24769){d}....................................{/d}2024-11-24
+[RS1 Flight 2 - Static Fire Update](https://x.com/longwalldefense/status/1828182472439611528/photo/1){d}.....................{/d}2024-08-26
+[Starship II:  A Reprise](https://medium.com/@lavieohana/starship-ii-a-reprise-df3585d9e39d){d}...............................{/d}2023-05-01
+[Starship I: Orbital Flight Test](https://medium.com/@lavieohana/starship-oft-thoughts-15573f6b9cea){d}.......................{/d}2023-04-21
+[NASA moves to procure a 2nd lunar lander](https://www.spacescout.info/2022/09/second-lunar-lander-rfp/){d}..............{/d}2022-09-17
+[NASA's long term vision for SLS](https://www.spacescout.info/2021/10/long-term-future-sls/){d}.......................{/d}2021-10-26
 
 // things i've built                                          {d}04{/d}
 
@@ -67,8 +67,8 @@ a few things along those lines i've written:
 [OPAL, aka "Warp Drive at home"](https://github.com/amorphous-engineering/OPAL){d}.....................{/d}{g}2025-12 - NOW{/g}
   - an open-source enterprise resource planning software i built
     with my friend [Abby](https://bigaouette.com/) for complex hardware projects
-[Blacklight](https://goblacklight.com){d}......................................{/d}{g}2024-11 - NOW{/g}
-  - space lasers, optical communications, keeping the world on time
+[Blacklight](https://goblacklight.com){d}.........................................{/d}{g}2024-11 - NOW{/g}
+  - space lasers, optics, keeping the world moving on time
 
 / rockets, specifically:
 {g}Purple Orchid{/g}{d}......................................{/d}{g}2025-06 - NOW{/g}
@@ -97,12 +97,12 @@ to figure out, most of my interests are an extension of that.
 
 in no specific order (papers, books, blog posts i liked):
 
-Everything Now................................Rosecrans Baldwin
-[Wayne Hale's Blog](https://waynehale.wordpress.com/)....................................Wayne Hale
-[Proxima: A Human Exploration of Mars](https://www.alternatehistory.com/forum/threads/proxima-a-human-exploration-of-mars.520416/)..............Nik Alexander
-[Katalepsis](https://katalepsis.net/)........................................Heather Young
-Challenger....................................Adam Higginbotham
-[How To Be A -10x Engineer](https://taylor.town/-10x)...........................taylor.town
+Everything Now{d}................................{/d}Rosecrans Baldwin
+[Wayne Hale's Blog](https://waynehale.wordpress.com/){d}....................................{/d}Wayne Hale
+[Proxima: A Human Exploration of Mars](https://www.alternatehistory.com/forum/threads/proxima-a-human-exploration-of-mars.520416/){d}..............{/d}Nik Alexander
+[Katalepsis](https://katalepsis.net/){d}........................................{/d}Heather Young
+Challenger{d}....................................{/d}Adam Higginbotham
+[How To Be A -10x Engineer](https://taylor.town/-10x){d}...........................{/d}taylor.town
 
 
 
