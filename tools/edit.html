@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>lv154 editor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=B612+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #070707;
+    --fg: #e0e0d8;
+    --dim: #505848;
+    --green: #40e080;
+    --pink: #F7A8B8;
+    --blue: #55CDFC;
+    --white: #FFFFFF;
+    --idle: #c8a848;
+    --down: #e05050;
+    --hdr: #58d858;
+    --link: #58b8d8;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; height: 100vh; overflow: hidden;
+    background: var(--bg); color: var(--fg);
+    font: 14px/1.4 'B612 Mono', monospace;
+  }
+  body { display: grid; grid-template-rows: auto 1fr auto; }
+
+  header {
+    display: flex; gap: .75rem; align-items: center;
+    padding: .55rem .85rem;
+    border-bottom: 1px solid var(--dim);
+    background: #0a0a0a;
+  }
+  header .title { color: var(--hdr); font-weight: 700; letter-spacing: .03em; }
+  header select, header button, header input {
+    font: inherit; color: var(--fg); background: #111;
+    border: 1px solid var(--dim); padding: .25rem .5rem;
+  }
+  header button { cursor: pointer; }
+  header button.primary { color: var(--green); border-color: var(--green); }
+  header button.danger  { color: var(--down); border-color: var(--down); }
+  header .spacer { flex: 1; }
+  header .saved { color: var(--green); }
+  header .dirty { color: var(--idle); }
+
+  main {
+    display: grid; grid-template-columns: 1fr 1fr; min-height: 0;
+    border-bottom: 1px solid var(--dim);
+  }
+  .pane { min-height: 0; overflow: auto; position: relative; }
+  .pane.left  { border-right: 1px solid var(--dim); }
+  .pane.left::before {
+    /* 64-col guide line — uses the same advance width as the textarea */
+    content: ""; position: absolute; top: 0; bottom: 0;
+    left: calc(.85rem + 64ch); width: 1px;
+    background: var(--dim); pointer-events: none; z-index: 1;
+  }
+  .pane.left .gutter {
+    position: absolute; top: 0; left: 0;
+    width: 3.25rem; padding: .55rem .25rem .55rem .5rem;
+    color: var(--dim); text-align: right; pointer-events: none;
+    white-space: pre; user-select: none;
+  }
+  .pane.left .gutter .over  { color: var(--down); }
+  .pane.left .gutter .near  { color: var(--idle); }
+  textarea {
+    width: 100%; height: 100%;
+    padding: .55rem .85rem .55rem 3.5rem;
+    border: 0; outline: 0; resize: none;
+    background: transparent; color: var(--fg);
+    font: inherit;
+    white-space: pre; overflow-wrap: normal;
+    tab-size: 2;
+  }
+
+  .pane.right { padding: .55rem .85rem; }
+  .pane.right pre {
+    margin: 0; white-space: pre; font: inherit; color: var(--fg);
+    max-width: 64ch;
+  }
+  /* token colors mirror template.html */
+  .pane.right .g    { color: var(--green); }
+  .pane.right .d    { color: var(--dim); }
+  .pane.right .hdr  { color: var(--hdr); }
+  .pane.right .tb   { color: var(--blue); }
+  .pane.right .tp   { color: var(--pink); }
+  .pane.right .tw   { color: var(--white); }
+  .pane.right a     { color: var(--link); text-decoration: none; }
+  .pane.right .over { background: rgba(224,80,80,.15); }
+
+  footer {
+    display: flex; gap: 1.25rem; padding: .35rem .85rem;
+    background: #0a0a0a; color: var(--dim);
+    border-top: 1px solid var(--dim);
+  }
+  footer .ok   { color: var(--green); }
+  footer .warn { color: var(--idle); }
+  footer .err  { color: var(--down); }
+  footer .spacer { flex: 1; }
+
+  .modal {
+    position: fixed; inset: 0; background: rgba(0,0,0,.65);
+    display: none; align-items: center; justify-content: center;
+  }
+  .modal.open { display: flex; }
+  .modal .box {
+    background: #0a0a0a; border: 1px solid var(--dim);
+    padding: 1rem 1.25rem; min-width: 22rem;
+  }
+  .modal h3 { margin: 0 0 .5rem; color: var(--hdr); font-weight: 400; }
+  .modal label { display: block; margin: .5rem 0 .15rem; color: var(--dim); }
+  .modal input { width: 100%; padding: .25rem .4rem;
+                 font: inherit; color: var(--fg); background: #111;
+                 border: 1px solid var(--dim); }
+  .modal .row { display: flex; gap: .5rem; justify-content: flex-end;
+                margin-top: 1rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="title">lv154 ✎</span>
+  <select id="file-pick" title="open file"></select>
+  <button id="btn-new">+ post</button>
+  <button id="btn-new-page" title="create a new page (e.g. resume.txt)">+ page</button>
+  <button id="btn-delete" class="danger">delete</button>
+  <span class="spacer"></span>
+  <span id="status">no file</span>
+  <button id="btn-save" class="primary">save (⌘S)</button>
+</header>
+
+<main>
+  <section class="pane left">
+    <div class="gutter" id="gutter"></div>
+    <textarea id="editor" spellcheck="false" autocomplete="off"
+              placeholder="// pick a file or hit '+ post'"></textarea>
+  </section>
+  <section class="pane right">
+    <pre id="preview"></pre>
+  </section>
+</main>
+
+<footer>
+  <span>line <span id="cur-line">1</span> col <span id="cur-col">1</span>
+        <span id="cur-visible"></span></span>
+  <span id="line-warning"></span>
+  <span class="spacer"></span>
+  <span id="overflow-summary"></span>
+  <span>64-col guide ▏</span>
+</footer>
+
+<div class="modal" id="modal">
+  <div class="box">
+    <h3 id="modal-title">new post</h3>
+    <label id="modal-label">slug (lowercase, words-with-dashes)</label>
+    <input id="modal-input" autocomplete="off" spellcheck="false">
+    <div class="row">
+      <button id="modal-cancel">cancel</button>
+      <button id="modal-ok" class="primary">create</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const filePick = $("file-pick"), editor = $("editor"), preview = $("preview");
+const gutter = $("gutter"), status = $("status");
+
+const MAX_COLS = 64;
+const TRANS_CYCLE = ["tb", "tp", "tw", "tp", "tb"];
+
+let state = { path: null, original: "", dirty: false };
+
+// ---- DSL helpers ----------------------------------------------------------
+// Compute the *visible* width of a line — same logic as build.py's renderers.
+function visibleLine(line) {
+  return line
+    .replace(/\{trans\}(.*?)\{\/trans\}/g, "$1")
+    .replace(/\{(g|d|hdr)\}([\s\S]*?)\{\/\1\}/g, "$2")
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1");
+}
+function visibleWidth(line) { return visibleLine(line).length; }
+
+function escapeHTML(s) {
+  return s.replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"
+  })[c]);
+}
+
+// Render preview HTML, mirroring build.py's render_source order:
+//   html.escape -> expand {trans} -> {g}/{d}/{hdr} -> [text](url)
+function renderPreview(text) {
+  let s = escapeHTML(text);
+  s = s.replace(/\{trans\}([\s\S]*?)\{\/trans\}/g, (_, w) => {
+    let out = "";
+    for (let i = 0; i < w.length; i++) {
+      out += `<span class="${TRANS_CYCLE[i % TRANS_CYCLE.length]}">${w[i]}</span>`;
+    }
+    return out;
+  });
+  s = s.replace(/\{(g|d|hdr)\}([\s\S]*?)\{\/\1\}/g,
+    (_, cls, inner) => `<span class="${cls}">${inner}</span>`);
+  s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g,
+    (_, t, u) => `<a href="${u}">${t}</a>`);
+  // mark visible-overrun lines in preview
+  const lines = s.split("\n");
+  const rawLines = text.split("\n");
+  for (let i = 0; i < lines.length; i++) {
+    if (visibleWidth(rawLines[i] || "") > MAX_COLS) {
+      lines[i] = `<span class="over">${lines[i]}</span>`;
+    }
+  }
+  return lines.join("\n");
+}
+
+// ---- gutter ---------------------------------------------------------------
+function paintGutter() {
+  const lines = editor.value.split("\n");
+  let html = "";
+  for (let i = 0; i < lines.length; i++) {
+    const vw = visibleWidth(lines[i]);
+    let cls = "";
+    if (vw > MAX_COLS) cls = "over";
+    else if (vw >= MAX_COLS - 4) cls = "near";
+    const num = String(i + 1).padStart(3, " ");
+    const w = String(vw).padStart(2, " ");
+    html += cls
+      ? `<span class="${cls}">${num} ${w}</span>\n`
+      : `${num} ${w}\n`;
+  }
+  gutter.innerHTML = html;
+}
+
+// ---- status / cursor ------------------------------------------------------
+function cursorPos() {
+  const upto = editor.value.slice(0, editor.selectionStart);
+  const lines = upto.split("\n");
+  const line = lines.length;
+  const col = lines[lines.length - 1].length + 1;
+  return { line, col };
+}
+function updateStatus() {
+  const { line, col } = cursorPos();
+  $("cur-line").textContent = line;
+  $("cur-col").textContent = col;
+  const raw = (editor.value.split("\n")[line - 1] || "");
+  const vw = visibleWidth(raw);
+  $("cur-visible").textContent = `(visible: ${vw}/${MAX_COLS})`;
+  const warn = $("line-warning");
+  if (raw.length !== vw) {
+    warn.textContent = `[markup ${raw.length}ch -> ${vw} visible]`;
+    warn.className = "";
+  } else {
+    warn.textContent = "";
+  }
+  // overflow summary
+  const over = editor.value.split("\n")
+    .map((l, i) => [i + 1, visibleWidth(l)])
+    .filter(([, w]) => w > MAX_COLS);
+  const sum = $("overflow-summary");
+  if (over.length === 0) {
+    sum.textContent = "no overruns";
+    sum.className = "ok";
+  } else {
+    sum.textContent = `${over.length} line(s) > 64: ${over.slice(0,5).map(([i,w]) => `L${i}=${w}`).join(", ")}${over.length > 5 ? "…" : ""}`;
+    sum.className = over.length > 0 ? "err" : "ok";
+  }
+  // dirty marker
+  state.dirty = editor.value !== state.original;
+  if (!state.path) status.textContent = "no file";
+  else if (state.dirty) { status.textContent = "● " + state.path; status.className = "dirty"; }
+  else { status.textContent = "✓ " + state.path; status.className = "saved"; }
+}
+
+function refresh() { paintGutter(); preview.innerHTML = renderPreview(editor.value); updateStatus(); }
+
+// keep gutter scrolled in sync with textarea
+editor.addEventListener("input", refresh);
+editor.addEventListener("keyup", updateStatus);
+editor.addEventListener("click", updateStatus);
+editor.addEventListener("scroll", () => { gutter.style.transform = `translateY(${-editor.scrollTop}px)`; });
+
+// ---- file ops -------------------------------------------------------------
+async function listFiles() {
+  const r = await fetch("/api/files"); const data = await r.json();
+  filePick.innerHTML = "";
+  const opt0 = document.createElement("option");
+  opt0.value = ""; opt0.textContent = "— open —";
+  filePick.appendChild(opt0);
+  const mkGroup = (label, paths, prefix) => {
+    if (!paths.length) return;
+    const g = document.createElement("optgroup"); g.label = label;
+    for (const p of paths) {
+      const o = document.createElement("option");
+      o.value = prefix + "/" + p; o.textContent = p;
+      g.appendChild(o);
+    }
+    filePick.appendChild(g);
+  };
+  mkGroup("pages", data.pages, "pages");
+  mkGroup("posts", data.posts, "posts");
+}
+async function openFile(path) {
+  if (!path) return;
+  if (state.dirty && !confirm("Unsaved changes — discard?")) {
+    filePick.value = state.path || ""; return;
+  }
+  const r = await fetch(`/api/file?path=${encodeURIComponent(path)}`);
+  if (!r.ok) { alert("open failed: " + await r.text()); return; }
+  editor.value = await r.text();
+  state.path = path; state.original = editor.value;
+  filePick.value = path;
+  refresh();
+  editor.focus();
+}
+async function saveFile() {
+  if (!state.path) { alert("no file selected"); return; }
+  const r = await fetch(`/api/file?path=${encodeURIComponent(state.path)}`, {
+    method: "PUT", body: editor.value
+  });
+  if (!r.ok) { alert("save failed: " + await r.text()); return; }
+  state.original = editor.value;
+  await listFiles(); filePick.value = state.path;
+  updateStatus();
+}
+async function deleteFile() {
+  if (!state.path) return;
+  if (!confirm(`Delete ${state.path}?`)) return;
+  const r = await fetch(`/api/file?path=${encodeURIComponent(state.path)}`, { method: "DELETE" });
+  if (!r.ok) { alert("delete failed: " + await r.text()); return; }
+  state.path = null; state.original = ""; editor.value = "";
+  await listFiles(); refresh();
+}
+
+// ---- modal (new post / new page) -----------------------------------------
+function openModal({ title, label, placeholder, onOk }) {
+  $("modal-title").textContent = title;
+  $("modal-label").textContent = label;
+  $("modal-input").value = "";
+  $("modal-input").placeholder = placeholder || "";
+  $("modal").classList.add("open");
+  $("modal-input").focus();
+  const handler = () => { onOk($("modal-input").value.trim()); closeModal(); };
+  $("modal-ok").onclick = handler;
+  $("modal-input").onkeydown = (e) => { if (e.key === "Enter") handler(); };
+}
+function closeModal() { $("modal").classList.remove("open"); }
+$("modal-cancel").onclick = closeModal;
+
+function todayISO() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
+function newPost() {
+  openModal({
+    title: "new post",
+    label: "slug (lowercase-with-dashes); date is today",
+    placeholder: "the-thing-i-wrote",
+    onOk: async (slug) => {
+      if (!/^[a-z0-9][a-z0-9_-]*$/.test(slug)) return alert("bad slug");
+      const path = `posts/${todayISO()}-${slug}.txt`;
+      const seed = `Untitled post\n\n(write here. use the same DSL as index.txt: {g}…{/g}, {d}…{/d}, [text](url), {trans}…{/trans}.)\n`;
+      const r = await fetch(`/api/file?path=${encodeURIComponent(path)}`,
+        { method: "PUT", body: seed });
+      if (!r.ok) return alert("create failed: " + await r.text());
+      await listFiles(); await openFile(path);
+    }
+  });
+}
+function newPage() {
+  openModal({
+    title: "new page",
+    label: "slug (lowercase-with-dashes; becomes /<slug>/)",
+    placeholder: "resume",
+    onOk: async (slug) => {
+      if (!/^[a-z][a-z0-9_-]*$/.test(slug)) return alert("bad slug");
+      const path = `pages/${slug}.txt`;
+      const seed = `// ${slug}\n\n(remember to add "${slug}" to config.json's "pages" array and a nav entry.)\n`;
+      const r = await fetch(`/api/file?path=${encodeURIComponent(path)}`,
+        { method: "PUT", body: seed });
+      if (!r.ok) return alert("create failed: " + await r.text());
+      await listFiles(); await openFile(path);
+    }
+  });
+}
+
+// ---- wiring --------------------------------------------------------------
+filePick.addEventListener("change", () => openFile(filePick.value));
+$("btn-new").addEventListener("click", newPost);
+$("btn-new-page").addEventListener("click", newPage);
+$("btn-save").addEventListener("click", saveFile);
+$("btn-delete").addEventListener("click", deleteFile);
+window.addEventListener("keydown", (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key === "s") { e.preventDefault(); saveFile(); }
+});
+window.addEventListener("beforeunload", (e) => {
+  if (state.dirty) { e.preventDefault(); e.returnValue = ""; }
+});
+
+(async () => { await listFiles(); refresh(); })();
+</script>
+</body>
+</html>
