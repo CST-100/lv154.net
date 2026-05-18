@@ -81,6 +81,26 @@ other things:
   propulsion work, lots of 3d printed rockets and silly builds.
   some favorites: [not a pipe bomb](https://x.com/lavie154/status/1837274248026456540), [quark SV0](https://x.com/lavie154/status/1659769898237837312), [thermal runaway](https://pbs.twimg.com/media/FemquBCUAAYQXe2?format=jpg&name=4096x4096)
 
+// things i've built                                          {d}04{/d}
+
+current project is {g}Purple Orchid{/g} – a 265 lbf N2O/E85 liquid
+rocket entirely self designed and built. inspired heavily by
+half cat rocketry's 1Cat/4. expecting flight soon enough…
+
+other things:
+
+WEB: {g}[OPAL, aka "Warp Drive at home"](https://github.com/amorphous-engineering/OPAL){/g}{d}.............{/d}2026-NOW
+  - an open-source enterprise resource planning software i built
+    with my friend [Abby](https://bigaouette.com/)
+ROCKETRY: {g}Purple Orchid{g}
+– professionally, a whole lot of launch vehicle concept
+  development and CONOPS work. [something along these lines](https://blog.ablspacesystems.com/p/the-global-future-of-launch?utm_campaign=post&utm_medium=web)…
+– optical comms work in the ~single photon space. if you wanna
+  hear more, you know where to ask.
+– lots of previous rocketry projects, some experimental
+  propulsion work, lots of 3d printed rockets and silly builds.
+  some favorites: [not a pipe bomb](https://x.com/lavie154/status/1837274248026456540), [quark SV0](https://x.com/lavie154/status/1659769898237837312), [thermal runaway](https://pbs.twimg.com/media/FemquBCUAAYQXe2?format=jpg&name=4096x4096)
+
 
 // interests, other things, etc                               {d}05{/d}
 
