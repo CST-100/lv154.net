@@ -53,7 +53,7 @@ where i rant about the space industry, public policy, and all
 sorts of other stuff.
 
 a few things along those lines i've written:
-[Starship IV: The Future](https://medium.com/@lavieohana/starship-iv-the-future-cc07c4b66544)                               2026-02-03
+[Starship IV: The Future](https://medium.com/@lavieohana/starship-iv-the-future-cc07c4b66544){d}...............................{/d}2026-02-03
 [Starship III: Risk](https://lavieohana.medium.com/starship-iii-risk-8cb0adf24769)                                    2024-11-24
 [RS1 Flight 2 - Static Fire Update](https://x.com/longwalldefense/status/1828182472439611528/photo/1)                     2024-08-26
 [Starship II:  A Reprise](https://medium.com/@lavieohana/starship-ii-a-reprise-df3585d9e39d)                               2023-05-01
@@ -89,7 +89,7 @@ half cat rocketry's 1Cat/4. expecting flight soon enough…
 
 other things:
 
-WEB: {g}[OPAL, aka "Warp Drive at home"](https://github.com/amorphous-engineering/OPAL){/g}{d}.............{/d}2026-NOW
+WEB: {g}[OPAL, aka "Warp Drive at home"](https://github.com/amorphous-engineering/OPAL){/g}{d}....................{/d}2026--NOW
   - an open-source enterprise resource planning software i built
     with my friend [Abby](https://bigaouette.com/)
 ROCKETRY: {g}Purple Orchid{g}
