@@ -83,22 +83,16 @@ other things:
 
 // things i've built                                          {d}04{/d}
 
-current project is {g}Purple Orchid{/g} – a 265 lbf N2O/E85 liquid
-rocket entirely self designed and built. inspired heavily by
-half cat rocketry's 1Cat/4. expecting flight soon enough…
-
-other things:
-
 [OPAL, aka "Warp Drive at home"](https://github.com/amorphous-engineering/OPAL){d}.....................{/d}{g}2025-12 - NOW{/g}
   - an open-source enterprise resource planning software i built
     with my friend [Abby](https://bigaouette.com/) for complex hardware projects
 
 ROCKETRY:
-{g}Purple Orchid{/g}{d}.....................{/d}{g}2025-06 - NOW{/g}
+{g}Purple Orchid{/g}{d}.............................{/d}{g}2025-06 - NOW{/g}
   - self-built liquid rocket, 265 lbf, N2O/E85, half cat style
   - fabrication ~70% done, Al 6061 + fiberglass airframe 
   - targeting flight [????] - [pictures](https://x.com/lavie154/status/2013889744392827319)
-{g}Not A Pipe Bomb{/g}.....................{/d}2023-09 - 2024-09
+{g}Not A Pipe Bomb{/g}{d}.........................{/d}2023-09 - 2024-09
   - Tripoli L2 certification, flown 3x, peak 4987 ft @ M1.06
   - pictures: [Flight 3](https://x.com/lavie154/status/1837274248026456540)
 
