@@ -70,9 +70,9 @@ half cat rocketry's 1Cat/4. expecting flight soon enough…
 
 other things:
 
-- [OPAL, aka "Warp Drive at home"]{https://github.com/amorphous-engineering/OPAL}
+- [OPAL, aka "Warp Drive at home"](https://github.com/amorphous-engineering/OPAL)
   an open-source enterprise resource planning software i built
-  with my friend [Abby]{https://bigaouette.com/}
+  with my friend [Abby](https://bigaouette.com/)
 – professionally, a whole lot of launch vehicle concept
   development and CONOPS work. [something along these lines](https://blog.ablspacesystems.com/p/the-global-future-of-launch?utm_campaign=post&utm_medium=web)…
 – optical comms work in the ~single photon space. if you wanna
