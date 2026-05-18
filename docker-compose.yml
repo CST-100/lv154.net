@@ -23,12 +23,15 @@ services:
       REPO_URL: https://github.com/CST-100/lv154.net.git
       REPO_REF: main
       POLL_INTERVAL: "300"
-    # If you ever need a live host-side status.json override (e.g. cron writes
-    # /mnt/user/appdata/lv154-status.json), uncomment the volume below. The
-    # container syncs the repo's status.json into the webroot, so this mount
-    # will shadow it.
-    # volumes:
-    #   - /mnt/user/appdata/lv154-status.json:/usr/share/nginx/html/status.json:ro
+      # Shared secret used by heartbeat URL: GET /_hb/<secret>/<name>.
+      # Sourced from .env on the unraid host (gitignored). Generate with
+      # `openssl rand -hex 24` and put HEARTBEAT_SECRET=... in .env.
+      HEARTBEAT_SECRET: ${HEARTBEAT_SECRET:?set HEARTBEAT_SECRET in .env on the host}
+      # How often status_check.py rewrites status.json and re-probes systems.
+      CHECK_INTERVAL: "60"
+    volumes:
+      # Persists per-system heartbeat timestamps across container restarts.
+      - lv154-heartbeats:/data
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
@@ -51,3 +54,6 @@ services:
 networks:
   proxy:
     external: true
+
+volumes:
+  lv154-heartbeats: {}

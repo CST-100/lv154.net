@@ -32,7 +32,8 @@ build_and_sync() {
   (cd "$APP_DIR" && python3 build.py)
   log "syncing to $WEB_ROOT"
   mkdir -p "$WEB_ROOT"
-  rsync -a --delete "$APP_DIR/dist/" "$WEB_ROOT/"
+  # status.json is owned by status_check.py; never let rsync delete it.
+  rsync -a --delete --exclude=status.json "$APP_DIR/dist/" "$WEB_ROOT/"
 }
 
 current_sha() {
@@ -44,7 +45,7 @@ fetch_repo
 build_and_sync
 log "initial deploy complete at $(current_sha)"
 
-# Background poll loop
+# Background git poll loop
 (
   while :; do
     sleep "$POLL_INTERVAL"
@@ -63,5 +64,9 @@ log "initial deploy complete at $(current_sha)"
   done
 ) &
 
-log "starting nginx (poll every ${POLL_INTERVAL}s)"
+# Status checker + heartbeat receiver (writes status.json, owns /data/heartbeats)
+log "starting status_check.py"
+python3 "$APP_DIR/status_check.py" &
+
+log "starting nginx (git poll every ${POLL_INTERVAL}s, status check every ${CHECK_INTERVAL:-60}s)"
 exec nginx -g 'daemon off;'

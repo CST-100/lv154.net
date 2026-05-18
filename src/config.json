@@ -1,12 +1,9 @@
 {
   "title": "Lavie Ohana",
   "nav": [
-    {"slug": "index",    "label": "HOME",     "href": "/"},
-    {"slug": "posts",    "label": "POSTS",    "href": "/posts/"},
-    {"slug": "resume",   "label": "RESUME",   "href": "#"},
-    {"slug": "rocketry", "label": "ROCKETRY", "href": "#"},
-    {"slug": "contact",  "label": "CONTACT",  "href": "#"}
+    {"slug": "index", "label": "HOME",  "href": "/"},
+    {"slug": "posts", "label": "POSTS", "href": "/posts/"}
   ],
   "pages": ["index"],
-  "socials": "[twitter](https://x.com/lavie154)  [flickr](https://www.flickr.com/photos/192651578@N07/)  [lv154@lavieohana.net](mailto:lv154@lavieohana.com)"
+  "socials": "[twitter](https://x.com/lavie154)  [flickr](https://www.flickr.com/photos/192651578@N07/)  [lavie@lv154.net](mailto:lavie@lv154.net)"
 }

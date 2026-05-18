@@ -33,7 +33,7 @@ a:hover { color: #90d8f0; }
 .d { color: #505848; }
 .ok { color: #40e080; }
 .idle { color: #c8a848; }
-.err { color: #e05050; }
+.down { color: #e05050; }
 .hdr { color: #58d858; }
 .tb { color: #55CDFC; }
 .tp { color: #F7A8B8; }
@@ -94,7 +94,7 @@ a:hover { color: #90d8f0; }
   }
   function stateBadge(state) {
     var label = state.toUpperCase();
-    var cls = state === 'ok' ? 'ok' : (state === 'idle' ? 'idle' : 'err');
+    var cls = state === 'ok' ? 'ok' : (state === 'idle' ? 'idle' : 'down');
     return '<span class="' + cls + '">■ ' + label + '</span>';
   }
   function visLen(s) {
@@ -135,13 +135,15 @@ a:hover { color: #90d8f0; }
       }
     });
     var sep = '<span class="d">' + Array(32).fill('-').join(' ') + '</span>';
-    sysEl.innerHTML = sep + '\n\n// systems                                     <span class="d">06</span>\n\n' +
+    var header = '// systems                                     <span class="d">' +
+      pad_l(String((data.systems || []).length), 2) + '</span>';
+    sysEl.innerHTML = sep + '\n\n' + header + '\n\n' +
       out.join('\n') + '\n\n' + sep;
   }
   function renderUnavailable() {
     var sep = '<span class="d">' + Array(32).fill('-').join(' ') + '</span>';
-    sysEl.innerHTML = sep + '\n\n// systems                                     <span class="d">06</span>\n\n' +
-      '  <span class="err">STATUS UNAVAILABLE</span>\n\n' + sep;
+    sysEl.innerHTML = sep + '\n\n// systems                                     <span class="d">..</span>\n\n' +
+      '  <span class="down">STATUS UNAVAILABLE</span>\n\n' + sep;
   }
   fetch('/status.json', { cache: 'no-cache' })
     .then(function(r) { return r.ok ? r.json() : Promise.reject(); })

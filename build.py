@@ -11,7 +11,6 @@ import html
 import json
 import re
 import shutil
-from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).parent
@@ -58,68 +57,16 @@ def render_source(text: str) -> str:
 
 
 # ---- systems block ----------------------------------------------------------
+# SSR a placeholder; the client-side JS in template.html fetches /status.json
+# (written by status_check.py) and replaces this span with real state.
 
 SEP = '<span class="d">' + " ".join(["-"] * 32) + "</span>"
 
-
-def fmt_seen(iso: str) -> str:
-    # accept "2026-05-04T14:20Z" or "...+00:00"
-    s = iso.replace("Z", "+00:00")
-    try:
-        dt = datetime.fromisoformat(s).astimezone(timezone.utc)
-    except ValueError:
-        return iso
-    return f"{dt.month:02d}/{dt.day:02d} {dt.hour:02d}:{dt.minute:02d}Z"
-
-
-def state_badge(state: str) -> str:
-    cls = {"ok": "ok", "idle": "idle"}.get(state, "err")
-    return f'<span class="{cls}">■ {state.upper()}</span>'
-
-
-def render_systems(status: dict) -> str:
-    lines: list[str] = []
-    systems = status.get("systems", [])
-    for i, sys in enumerate(systems):
-        if i > 0:
-            lines.append("")
-        name = sys["name"]
-        desc = sys.get("desc", "")
-        state = sys.get("state", "err")
-        # line 1: indent + name + spaces + desc (name col width 22 incl. leading 2 sp)
-        pre = f'  <span class="g">{name}</span>'
-        pre_vis = 2 + len(name)
-        pad = max(1, 22 - pre_vis)
-        lines.append(pre + " " * pad + desc)
-        # line 2: state badge right-padded to 64 cols total with last_seen/uptime
-        badge = state_badge(state)
-        badge_vis = 2 + len(state)  # "■ STATE"
-        right = sys["uptime"] + " UPTIME" if sys.get("uptime") else (
-            fmt_seen(sys["last_seen"]) if sys.get("last_seen") else ""
-        )
-        left_pad = 21
-        sp = max(3, 64 - left_pad - badge_vis - len(right))
-        lines.append(" " * left_pad + badge + " " * sp + right)
-        # services
-        services = sys.get("services") or []
-        if services:
-            ok_n = sum(1 for s in services if s.get("state") == "ok")
-            services_label = "      services:"
-            counter = f"({ok_n}/{len(services)} OK)"
-            sp_hdr = max(3, 64 - len(services_label) - len(counter))
-            lines.append(services_label + " " * sp_hdr + counter)
-            for svc in services:
-                label = "           - " + svc["name"]
-                b = state_badge(svc["state"])
-                bv = 2 + len(svc["state"])
-                sp2 = max(1, 64 - len(label) - bv)
-                lines.append(label + " " * sp2 + b)
-    body = "\n".join(lines)
-    return (
-        f'<span id="systems-block">{SEP}\n\n'
-        f'// systems                                     <span class="d">06</span>\n\n'
-        f"{body}\n\n{SEP}</span>"
-    )
+SYSTEMS_PLACEHOLDER = (
+    f'<span id="systems-block">{SEP}\n\n'
+    f'// systems                                     <span class="d">..</span>\n\n'
+    f'  <span class="d">fetching...</span>\n\n{SEP}</span>'
+)
 
 
 # ---- nav -------------------------------------------------------------------
@@ -154,10 +101,10 @@ def render_page(template: str, config: dict, current_slug: str, body: str) -> st
             .replace("{{socials}}", socials_html))
 
 
-def build_page(slug: str, config: dict, template: str, systems_html: str) -> None:
+def build_page(slug: str, config: dict, template: str) -> None:
     src = (SRC / "pages" / f"{slug}.txt").read_text(encoding="utf-8")
     body = render_source(src)
-    body = body.replace("{systems}", systems_html)
+    body = body.replace("{systems}", SYSTEMS_PLACEHOLDER)
 
     page = render_page(template, config, slug, body)
 
@@ -232,24 +179,19 @@ def build_posts_index(posts: list[dict], config: dict, template: str) -> None:
 def main() -> None:
     config = json.loads((SRC / "config.json").read_text(encoding="utf-8"))
     template = (SRC / "template.html").read_text(encoding="utf-8")
-    status = json.loads((SRC / "status.json").read_text(encoding="utf-8"))
-    systems_html = render_systems(status)
 
     if DIST.exists():
         shutil.rmtree(DIST)
     DIST.mkdir()
 
     for slug in config["pages"]:
-        build_page(slug, config, template, systems_html)
+        build_page(slug, config, template)
 
     posts = discover_posts()
     if posts or (SRC / "posts").is_dir():
         for post in posts:
             build_post(post, config, template)
         build_posts_index(posts, config, template)
-
-    shutil.copy(SRC / "status.json", DIST / "status.json")
-    print(f"  wrote dist/status.json")
 
     htaccess_src = ROOT / "htaccess"
     if htaccess_src.exists():

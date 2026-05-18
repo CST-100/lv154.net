@@ -1,0 +1,26 @@
+{
+  "_note": "Config for status_check.py. check.type: 'self' = always ok (run on same host), 'tcp' = TCP connect probe, 'heartbeat' = read /data/heartbeats/<name>.epoch.",
+  "thresholds": {"ok_seconds": 300, "idle_seconds": 3600},
+  "systems": [
+    {
+      "name": "cygnus",
+      "desc": "server, unRAID, i7 8700K, 16G",
+      "check": {"type": "self"}
+    },
+    {
+      "name": "delta-IV",
+      "desc": "Framework 13, i7-1360P, 32G",
+      "check": {"type": "heartbeat"}
+    },
+    {
+      "name": "delta-III",
+      "desc": "old laptop, i7-8565U, 16G",
+      "check": {"type": "heartbeat"}
+    },
+    {
+      "name": "kestrel",
+      "desc": "ads-b in + dns, rpi 3B+, 1G",
+      "check": {"type": "tcp", "host": "192.168.1.151", "port": 53, "timeout": 3}
+    }
+  ]
+}
