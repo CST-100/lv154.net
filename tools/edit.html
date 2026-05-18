@@ -46,17 +46,12 @@
   header .dirty { color: var(--idle); }
 
   main {
-    display: grid; grid-template-columns: 1fr 1fr; min-height: 0;
+    /* editor gets the lion's share; preview only needs ~64ch to be honest. */
+    display: grid; grid-template-columns: 1fr min(34rem, 38%); min-height: 0;
     border-bottom: 1px solid var(--dim);
   }
   .pane { min-height: 0; overflow: auto; position: relative; }
   .pane.left  { border-right: 1px solid var(--dim); }
-  .pane.left::before {
-    /* 64-col guide line — uses the same advance width as the textarea */
-    content: ""; position: absolute; top: 0; bottom: 0;
-    left: calc(.85rem + 64ch); width: 1px;
-    background: var(--dim); pointer-events: none; z-index: 1;
-  }
   .pane.left .gutter {
     position: absolute; top: 0; left: 0;
     width: 3.25rem; padding: .55rem .25rem .55rem .5rem;
@@ -174,14 +169,21 @@ const TRANS_CYCLE = ["tb", "tp", "tw", "tp", "tb"];
 let state = { path: null, original: "", dirty: false };
 
 // ---- DSL helpers ----------------------------------------------------------
-// Compute the *visible* width of a line — same logic as build.py's renderers.
-function visibleLine(line) {
-  return line
-    .replace(/\{trans\}(.*?)\{\/trans\}/g, "$1")
+// Strip DSL markup across the *whole text* first (links can span newlines),
+// then split. Per-line visible width = length of corresponding stripped line.
+function visibleTextOf(text) {
+  return text
+    .replace(/\{trans\}([\s\S]*?)\{\/trans\}/g, "$1")
     .replace(/\{(g|d|hdr)\}([\s\S]*?)\{\/\1\}/g, "$2")
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1");
 }
-function visibleWidth(line) { return visibleLine(line).length; }
+let _widthCache = { src: null, widths: [] };
+function lineWidths(text) {
+  if (_widthCache.src === text) return _widthCache.widths;
+  const widths = visibleTextOf(text).split("\n").map(l => l.length);
+  _widthCache = { src: text, widths };
+  return widths;
+}
 
 function escapeHTML(s) {
   return s.replace(/[&<>"']/g, c => ({
@@ -204,11 +206,11 @@ function renderPreview(text) {
     (_, cls, inner) => `<span class="${cls}">${inner}</span>`);
   s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g,
     (_, t, u) => `<a href="${u}">${t}</a>`);
-  // mark visible-overrun lines in preview
+  // mark visible-overrun lines in preview using accurate widths
+  const widths = lineWidths(text);
   const lines = s.split("\n");
-  const rawLines = text.split("\n");
   for (let i = 0; i < lines.length; i++) {
-    if (visibleWidth(rawLines[i] || "") > MAX_COLS) {
+    if ((widths[i] ?? 0) > MAX_COLS) {
       lines[i] = `<span class="over">${lines[i]}</span>`;
     }
   }
@@ -217,10 +219,10 @@ function renderPreview(text) {
 
 // ---- gutter ---------------------------------------------------------------
 function paintGutter() {
-  const lines = editor.value.split("\n");
+  const widths = lineWidths(editor.value);
   let html = "";
-  for (let i = 0; i < lines.length; i++) {
-    const vw = visibleWidth(lines[i]);
+  for (let i = 0; i < widths.length; i++) {
+    const vw = widths[i];
     let cls = "";
     if (vw > MAX_COLS) cls = "over";
     else if (vw >= MAX_COLS - 4) cls = "near";
@@ -245,19 +247,20 @@ function updateStatus() {
   const { line, col } = cursorPos();
   $("cur-line").textContent = line;
   $("cur-col").textContent = col;
+  const widths = lineWidths(editor.value);
   const raw = (editor.value.split("\n")[line - 1] || "");
-  const vw = visibleWidth(raw);
+  const vw = widths[line - 1] ?? 0;
   $("cur-visible").textContent = `(visible: ${vw}/${MAX_COLS})`;
   const warn = $("line-warning");
   if (raw.length !== vw) {
-    warn.textContent = `[markup ${raw.length}ch -> ${vw} visible]`;
+    warn.textContent = `[source ${raw.length}ch -> ${vw} visible]`;
     warn.className = "";
   } else {
     warn.textContent = "";
   }
   // overflow summary
-  const over = editor.value.split("\n")
-    .map((l, i) => [i + 1, visibleWidth(l)])
+  const over = widths
+    .map((w, i) => [i + 1, w])
     .filter(([, w]) => w > MAX_COLS);
   const sum = $("overflow-summary");
   if (over.length === 0) {
