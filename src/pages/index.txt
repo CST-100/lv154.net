@@ -61,33 +61,16 @@ a few things along those lines i've written:
 [NASA moves to procure a 2nd lunar lander](https://www.spacescout.info/2022/09/second-lunar-lander-rfp/)              2022-09-17
 [NASA's long term vision for SLS](https://www.spacescout.info/2021/10/long-term-future-sls/)                       2021-10-26
 
-
 // things i've built                                          {d}04{/d}
 
-current project is {g}Purple Orchid{/g} – a 265 lbf N2O/E85 liquid
-rocket entirely self designed and built. inspired heavily by
-half cat rocketry's 1Cat/4. expecting flight soon enough…
-
-other things:
-
-- [OPAL, aka "Warp Drive at home"](https://github.com/amorphous-engineering/OPAL)
-  an open-source enterprise resource planning software i built
-  with my friend [Abby](https://bigaouette.com/)
-– professionally, a whole lot of launch vehicle concept
-  development and CONOPS work. [something along these lines](https://blog.ablspacesystems.com/p/the-global-future-of-launch?utm_campaign=post&utm_medium=web)…
-– optical comms work in the ~single photon space. if you wanna
-  hear more, you know where to ask.
-– lots of previous rocketry projects, some experimental
-  propulsion work, lots of 3d printed rockets and silly builds.
-  some favorites: [not a pipe bomb](https://x.com/lavie154/status/1837274248026456540), [quark SV0](https://x.com/lavie154/status/1659769898237837312), [thermal runaway](https://pbs.twimg.com/media/FemquBCUAAYQXe2?format=jpg&name=4096x4096)
-
-// things i've built                                          {d}04{/d}
-
+/ major projects:
 [OPAL, aka "Warp Drive at home"](https://github.com/amorphous-engineering/OPAL){d}.....................{/d}{g}2025-12 - NOW{/g}
   - an open-source enterprise resource planning software i built
     with my friend [Abby](https://bigaouette.com/) for complex hardware projects
+[Blacklight](https://goblacklight.com){d}......................................{/d}{g}2024-11 - NOW{/g}
+  - space lasers, optical communications, keeping the world on time
 
-ROCKETRY:
+/ rockets, specifically:
 {g}Purple Orchid{/g}{d}......................................{/d}{g}2025-06 - NOW{/g}
   - self-built liquid rocket, 265 lbf, N2O/E85, half cat style
   - fabrication ~70% done, Al 6061 + fiberglass airframe 
@@ -95,7 +78,7 @@ ROCKETRY:
 Not A Pipe Bomb{d}................................{/d}2023-09 - 2024-09
   - Tripoli L2 certification, flown 3x, peak 4987 ft @ M1.06
   - pictures: [Flight 3](https://x.com/lavie154/status/1837274248026456540)
-Quark SV0{d}......................................{/d}2023-09 - 2024-09
+Quark SV0{d}.............................................{/d}2023-05-20
   - L2 attempt, pathfinder for early 2.25" liquid rocket
   - Flight 1: Alt 8962 ft, Vel >M1.50, [pictures](https://x.com/lavie154/status/1659769898237837312)
 
