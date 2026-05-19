@@ -1,11 +1,9 @@
-//
-
-lavie ohana — (she/her, it/its)
+// lavie ohana — (she/her, it/its)
 
 hi there, i'm lavie.
 
-helping build bridges to the stars by day,
-general-purpose nerd by night.
+helping build bridges to the stars by day, general-purpose nerd
+by night.
 
 
 // a little more about me                                     {d}01{/d}
@@ -55,11 +53,11 @@ sorts of other stuff.
 a few things along those lines i've written:
 [Starship IV: The Future](https://medium.com/@lavieohana/starship-iv-the-future-cc07c4b66544){d}...............................{/d}2026-02-03
 [Starship III: Risk](https://lavieohana.medium.com/starship-iii-risk-8cb0adf24769){d}....................................{/d}2024-11-24
-[RS1 Flight 2 - Static Fire Update](https://x.com/longwalldefense/status/1828182472439611528/photo/1){d}.....................{/d}2024-08-26
 [Starship II:  A Reprise](https://medium.com/@lavieohana/starship-ii-a-reprise-df3585d9e39d){d}...............................{/d}2023-05-01
 [Starship I: Orbital Flight Test](https://medium.com/@lavieohana/starship-oft-thoughts-15573f6b9cea){d}.......................{/d}2023-04-21
 [NASA moves to procure a 2nd lunar lander](https://www.spacescout.info/2022/09/second-lunar-lander-rfp/){d}..............{/d}2022-09-17
 [NASA's long term vision for SLS](https://www.spacescout.info/2021/10/long-term-future-sls/){d}.......................{/d}2021-10-26
+
 
 // things i've built                                          {d}04{/d}
 
@@ -69,8 +67,12 @@ a few things along those lines i've written:
     with my friend [Abby](https://bigaouette.com/) for complex hardware projects
 [Blacklight](https://goblacklight.com){d}.........................................{/d}{g}2024-11 - NOW{/g}
   - space lasers, optics, keeping the world moving on time
+[RS1 Block 2](https://ablspacesystems.com/rs1/){d}....................................{/d}2023-07 - 2024-08
+  - 1,350 kg to LEO launch vehicle @ abl space systems
+  - Flight 2: [anomaly report](https://x.com/longwalldefense/status/1828182472439611528/photo/1), test imagery, vehicle paint/livery
+  - program-wide strategy + concept development, [like this](https://blog.ablspacesystems.com/p/the-global-future-of-launch?utm_campaign=post&utm_medium=web)
 
-/ rockets, specifically:
+/ amateur rocketry:
 {g}Purple Orchid{/g}{d}......................................{/d}{g}2025-06 - NOW{/g}
   - self-built liquid rocket, 265 lbf, N2O/E85, half cat style
   - fabrication ~70% done, Al 6061 + fiberglass airframe 
@@ -82,10 +84,6 @@ Quark SV0{d}.............................................{/d}2023-05-20
   - L2 attempt, pathfinder for early 2.25" liquid rocket
   - Flight 1: Alt 8962 ft, Vel >M1.50, [pictures](https://x.com/lavie154/status/1659769898237837312)
 
-– professionally, a whole lot of launch vehicle concept
-  development and CONOPS work. [something along these lines](https://blog.ablspacesystems.com/p/the-global-future-of-launch?utm_campaign=post&utm_medium=web)…
-– optical comms work in the ~single photon space. if you wanna
-  hear more, you know where to ask.
 
 // interests, other things, etc                               {d}05{/d}
 
@@ -103,7 +101,6 @@ Everything Now{d}................................{/d}Rosecrans Baldwin
 [Katalepsis](https://katalepsis.net/){d}........................................{/d}Heather Young
 Challenger{d}....................................{/d}Adam Higginbotham
 [How To Be A -10x Engineer](https://taylor.town/-10x){d}...........................{/d}taylor.town
-
 
 
 / what i'm listening to
