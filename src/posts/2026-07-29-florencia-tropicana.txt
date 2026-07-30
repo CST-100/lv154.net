@@ -1,0 +1,137 @@
+a guitar transcription of Emperor X's Florencia Tropicana
+
+heard chad play this song live for the first time at The Echo
+in LA on July 25, 2026 and can't get it out of my head. i
+believe this is the first tab of it ever, only about 21 years
+late. haha
+================================================================
+
+{g}Florencia Tropicana{/g}
+{d}Tectonic Membrane / Thin Strip on an Edgeless Platform{/d}
+by Emperor X / Chad R. Matheny, 2004
+
+TUNING: EADGBe
+KEY: A
+there seem to be two loops to this, A and B.
+
+LOOP A goes: D, A, B/F#, F#m, E
+count: (D) 1-2-3, (A)(B/F#)(F#m) the same, E 1-2-3-4
+
+LOOP B goes: G, A, F#m,  G
+
+where:
+D   = xx0232
+A   = 002220
+B/F#= 224442
+F#m = 244222
+E   = 022100
+G   = 320003
+
+{d}note: B/F# could also be 224422, which would be F#sus4. unsure.{/d}
+--------------------------------
+lyrics transcribed per live show, not necessarily the same
+
+INTRO / LOOP A
+{g}D{/g} {g}A{/g} {g}B/F#{/g} {g}F#m{/g} {g}E{/g} 
+Call...
+
+{g}D{/g}               {g}A{/g}          {g}B/F#{/g}          {g}F#m{/g}          {g}E{/g} 
+It takes a call to make us face where we stop and start
+{g}D{/g}                {g}A{/g}        {g}B/F#{/g}      {g}F#m{/g}       {g}E{/g} 
+And in the mall, the mall, the mall, the mall
+       {g}D{/g}    {g}A{/g}      {g}B/F#{/g}          {g}F#m{/g}    {g}E{/g} 
+at the J.C. Penney where your mama works
+         {g}D{/g}      {g}A{/g}   {g}B/F#{/g}    {g}F#m{/g}    
+We drove across the state...
+        {g}E{/g}  {g}D{/g}          {g}A{/g}      {g}B/F#{/g}    {g}F#m{/g}        
+I wanna go halfway to Boston and the borderline
+    {g}E{/g}        {g}D{/g}    {g}A{/g}           {g}B/F#{/g}   {g}F#m{/g}       {g}E{/g}
+You bought a map (you wanted, a map, you wanted)
+        {g}D{/g}   {g}A{/g}             {g}B/F#{/g}   {g}F#m{/g}      {g}E{/g}
+And the FTA searched your flight all night
+
+{d}[LOOP B]{/d}
+  {g}G{/g}                      {g}A{/g}
+A one way arrow puts you on Air France
+{g}F#m{/g}                       {g}G{/g}
+Reverse the flow of time and your plane flies backwards
+       {g}G{/g}                      {g}A{/g}
+Let it crash into Florida and kill my chance
+{g}F#m{/g}                    {g}G{/g}
+Standing on a desktop, screaming swear words
+
+
+  {g}G{/g}                    {g}A{/g}
+Getting crushed at the night club drunk
+{g}F#m{/g}                               {g}G{/g}
+You're drinking too much tea from Long Island toxins
+  {g}G{/g}                    {g}A{/g}
+I see you dance to the Japanese dub
+         {g}F#m{/g}                    {g}G{/g}
+That you put in my head when we started talking
+
+{d}LOOP A{/d}
+{g}D{/g} {g}A{/g} {g}B/F#{/g} {g}F#m{/g} {g}E{/g} 
+{g}D{/g} {g}A{/g} {g}B/F#{/g} {g}F#m{/g} {g}E{/g} 
+
+   {g}D{/g}     {g}A{/g} {g}B/F#{/g} {g}F#m{/g} {g}E{/g} 
+We fight
+{g}D{/g}           {g}A{/g}      {g}B/F#{/g}        {g}F#m{/g} {g}E{/g} 
+Sending out sabers through the satellites all night
+
+{g}D{/g}   {g}A{/g}      {g}B/F#{/g}        {g}F#m{/g}        {g}E{/g} 
+(in orbit, fiber-optic telescopic)
+            {g}D{/g}  {g}A{/g}         {g}B/F#{/g}     {g}F#m{/g}        {g}E{/g} 
+Through the AP wires and security networks
+     {g}D{/g}      {g}A{/g}         {g}B/F#{/g}     {g}F#m{/g}            {g}E{/g} 
+Give light (cohesion, alliance by a wavelength)
+         {g}D{/g}                {g}A{/g}      {g}B/F#{/g}    {g}F#m{/g}   {g}E{/g} 
+to your fiber-optic head, it's a mess of cables
+       {g}D{/g}      {g}A{/g}  {g}B/F#{/g} {g}F#m{/g} {g}E{/g} 
+It's a balled up fist
+         {g}D{/g} {d}STOP..................................{/d}{g}D{/g}
+And it's angry at the concept of technology drift
+
+
+{d}LOOP B{/d}
+{g}G{/g}                        {g}A{/g}
+I open .txt files at the break of day
+{g}F#m{/g}    {g}G{/g}
+.psd extension blasted
+{g}G{/g}                 {g}A{/g}
+Bleary eyes and a soulless sway
+ {g}F#m{/g}
+I swagger out the door
+          {g}G{/g}
+Yeah, I'm sure I’ve lost it
+
+
+{g}G{/g}                          {g}A{/g}
+Update your journal with a data disc
+  {g}F#m{/g}                               {g}G{/g}
+I put it in your pack. I don't know where I tossed it
+{g}G{/g}                              {g}A{/g}
+I made a tape recording of the Boston bridge
+    {g}F#m{/g}                        {g}G{/g}
+And sent as an attachment, but Friendster lost it
+
+{d}note: a couple verses are missing here, as played{/d}
+{g}G{/g}                         {g}A{/g}
+Cell phone blinks, “Baby, scan my heart.”
+        {g}F#m{/g}
+They're cutting the connection
+     {g}G{/g}
+I've already lost it 
+
+{d}LOOP A{/d}
+{g}D{/g} {g}A{/g} {g}B/F#{/g} {g}F#m{/g} {g}E{/g} 
+{g}D{/g} {g}A{/g} {g}B/F#{/g} {g}F#m{/g} {g}E{/g} 
+
+{g}D{/g}  {g}A{/g}      {g}B/F#{/g} {g}F#m{/g}      {g}E{/g} 
+...Florencia   Tropicana
+
+{g}D{/g}  {g}A{/g}      {g}B/F#{/g} {g}F#m{/g}      {g}E{/g} 
+   Florencia   Tropicana
+
+{g}D{/g}  {g}A{/g}      {g}B/F#{/g} {g}F#m{/g}      {g}E{/g} 
+   Florencia   Tropicana...
