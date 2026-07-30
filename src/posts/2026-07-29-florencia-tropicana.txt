@@ -37,9 +37,9 @@ Call...
 
 {g}D{/g}               {g}A{/g}          {g}B/F#{/g}          {g}F#m{/g}          {g}E{/g} 
 It takes a call to make us face where we stop and start
-{g}D{/g}                {g}A{/g}        {g}B/F#{/g}      {g}F#m{/g}       {g}E{/g} 
+           {g}D{/g}     {g}A{/g}        {g}B/F#{/g}      {g}F#m{/g}       {g}E{/g} 
 And in the mall, the mall, the mall, the mall
-       {g}D{/g}    {g}A{/g}      {g}B/F#{/g}          {g}F#m{/g}    {g}E{/g} 
+       {g}D{/g}    {g}A{/g}            {g}B/F#{/g}      {g}F#m{/g}    {g}E{/g} 
 at the J.C. Penney where your mama works
          {g}D{/g}      {g}A{/g}   {g}B/F#{/g}    {g}F#m{/g}    
 We drove across the state...
@@ -53,7 +53,7 @@ And the FTA searched your flight all night
 {d}[LOOP B]{/d}
   {g}G{/g}                      {g}A{/g}
 A one way arrow puts you on Air France
-{g}F#m{/g}                       {g}G{/g}
+{g}F#m{/g}                               {g}G{/g}
 Reverse the flow of time and your plane flies backwards
        {g}G{/g}                      {g}A{/g}
 Let it crash into Florida and kill my chance
@@ -61,9 +61,9 @@ Let it crash into Florida and kill my chance
 Standing on a desktop, screaming swear words
 
 
-  {g}G{/g}                    {g}A{/g}
+        {g}G{/g}              {g}A{/g}
 Getting crushed at the night club drunk
-{g}F#m{/g}                               {g}G{/g}
+{g}F#m{/g}                                    {g}G{/g}
 You're drinking too much tea from Long Island toxins
   {g}G{/g}                    {g}A{/g}
 I see you dance to the Japanese dub
