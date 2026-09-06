@@ -12,6 +12,7 @@ import json
 import re
 import shutil
 import time
+import unicodedata
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -24,6 +25,48 @@ TRANS_CYCLE = ["tb", "tp", "tw", "tp", "tb"]
 LINK_RE = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
 SPAN_RE = re.compile(r"\{(g|d|hdr)\}(.*?)\{/\1\}", re.DOTALL)
 TRANS_RE = re.compile(r"\{trans\}(.*?)\{/trans\}", re.DOTALL)
+
+
+# ---- visible width ----------------------------------------------------------
+# The site is laid out at 64 columns. These helpers define what a "column" is
+# once the DSL markup is stripped, and are shared with tools/tui.py so the
+# editor, the build, and the rendered page all agree.
+
+MAX_COLS = 64
+
+
+def visible_text(text: str) -> str:
+    """Strip DSL markup, leaving what the reader sees. Preserves newlines."""
+    text = TRANS_RE.sub(r"\1", text)
+    text = SPAN_RE.sub(r"\2", text)
+    text = LINK_RE.sub(r"\1", text)
+    return text
+
+
+def char_width(ch: str) -> int:
+    """Terminal/monospace cell width of one character (0, 1 or 2)."""
+    if unicodedata.combining(ch):
+        return 0
+    return 2 if unicodedata.east_asian_width(ch) in ("W", "F") else 1
+
+
+def display_width(s: str) -> int:
+    return sum(char_width(c) for c in s)
+
+
+def line_widths(text: str) -> list[int]:
+    """Visible width of every line of `text` (markup stripped)."""
+    return [display_width(line) for line in visible_text(text).split("\n")]
+
+
+def overruns(text: str, limit: int = MAX_COLS) -> list[tuple[int, int]]:
+    """(1-based line number, visible width) for every line wider than `limit`."""
+    return [(i + 1, w) for i, w in enumerate(line_widths(text)) if w > limit]
+
+
+def warn_overruns(label: str, text: str) -> None:
+    for ln, w in overruns(text):
+        print(f"  warn: {label} L{ln} is {w} cols (max {MAX_COLS})")
 
 
 def expand_trans(text: str) -> str:
@@ -112,6 +155,7 @@ def render_page(template: str, config: dict, current_slug: str, body: str) -> st
 
 def build_page(slug: str, config: dict, template: str) -> None:
     src = (SRC / "pages" / f"{slug}.txt").read_text(encoding="utf-8")
+    warn_overruns(f"pages/{slug}.txt", src)
     body = render_source(src)
     body = body.replace("{systems}", SYSTEMS_PLACEHOLDER)
 
@@ -136,7 +180,9 @@ def discover_posts() -> list[dict]:
             print(f"  skip (bad name): {path.name}")
             continue
         date, slug = m.group(1), m.group(2)
-        lines = path.read_text(encoding="utf-8").splitlines()
+        text = path.read_text(encoding="utf-8")
+        warn_overruns(f"posts/{path.name}", text)
+        lines = text.splitlines()
         title = lines[0].strip() if lines else slug
         body = "\n".join(lines[2:]) if len(lines) > 2 else ""
         posts.append({"date": date, "slug": slug, "title": title, "body": body})
@@ -170,7 +216,7 @@ def render_posts_index(posts: list[dict]) -> str:
     for p in posts:
         title = html.escape(p["title"])
         link = f'<a href="/posts/{p["slug"]}/">{title}</a>'
-        vis = len(p["title"])
+        vis = display_width(p["title"])
         pad = max(2, 64 - vis - len(p["date"]))
         lines.append(link + " " * pad + p["date"])
     return "\n".join(lines)

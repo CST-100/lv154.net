@@ -40,6 +40,17 @@ The body text is HTML-escaped, then these tokens expand:
 
 Pipeline lives in `build.py` (`render_source` → `render_inline`). `{systems}` is substituted after inline rendering and only on pages that contain it.
 
+## Editing
+
+Two local editors, both showing per-line *visible* width (markup stripped) against the 64-col limit and a rendered preview:
+
+- `make tui` — curses TUI (`tools/tui.py`, stdlib only). Source pane with highlighted markup + gutter widths on the left, rendered preview on the right. `make tui FILE=posts/2026-05-17-hello.txt` opens a file directly; no arg opens the file picker. `make tui ARGS="--keys helix"` passes flags. F1 (or `:help [about|markup|ctrl|helix]`) opens a scrollable cheat sheet; `python3 tools/tui.py --man` prints it.
+  - Two key styles: `ctrl` (default: `^S` save, `^O` files, `^N` new post, `^F` find, `^P` preview, `^Z`/`^R` undo/redo, `^Q` quit) and `helix` (modal: `h j k l w b e x d c y p u U`, `i a o`, `/`, `:w :q :e :new :page :keys`, `space-f` files). `^S ^O ^P ^Q F1` work in both.
+  - Theme: preview pane paints the site's fg/bg by default; editor pane uses the terminal's colours. Config at `~/.config/lv154/tui.json` (or `$LV154_TUI_CONFIG`; `--init-config` writes a starter): `keys`, `theme.preview`/`theme.editor` (`site`|`terminal`), `palette` (`#rrggbb` overrides). Flags `--keys --preview --editor --config` override the file.
+- `make edit` — browser version (`tools/edit.py` + `tools/edit.html`) on `127.0.0.1:8001`.
+
+Width logic (`visible_text`, `line_widths`, `overruns`) lives in `build.py`; the build prints a `warn:` line for any source line wider than 64 visible columns but does not fail.
+
 ## Adding things
 
 **New static page** (e.g. resume):
