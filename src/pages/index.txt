@@ -37,14 +37,15 @@ development team. got to tell the world about [a not-so-very-fun
 day](https://x.com/ablspacesystems/status/1828182472439611528). joined a bunch of friends on an [involuntary 2-month paid
 vacation](https://www.linkedin.com/feed/update/urn:li:activity:7235130720954826753/) in august 2024.
 
-since feb 2025, a few friends and i have been toying with a
-project called [{g}Blacklight{/g}](https://goblacklight.com), our home for a lot of wacky space-
-tech R&D projects. we previously did a lot of work on optical
-GPS/PNT via space lasers, which was quite fun!
+a few friends and i started [{g}Blacklight{/g}](https://goblacklight.com) in november 2024 as a
+home for unconventional space-tech R&D nobody else was working
+on. we spent a year demonstrating ultra low SNR optical comms
+and PNT and learned a lot from that! but shelved entering 2026.
 
-starting june 2026, we've been working on generation 2 in-space
-computing using incandescent-hot analog devices. if this sounds
-like something you're interested in, we should talk! 
+since june 2026, we've been working on generation 2 in-space
+computing using incandescent-hot analog devices. if that sounds
+like your kind of thing, we should definitely talk.
+ 
 
 // signal and noise                                           {d}03{/d}
 
@@ -68,8 +69,15 @@ a few things along those lines i've written:
 [OPAL, aka "Warp Drive at home"](https://github.com/amorphous-engineering/OPAL){d}.....................{/d}{g}2025-12 - NOW{/g}
   - an open-source enterprise resource planning software i built
     with my friend [Abby](https://bigaouette.com/) for complex hardware projects
-[Blacklight](https://goblacklight.com){d}.........................................{/d}{g}2024-11 - NOW{/g}
-  - space lasers, optics, keeping the world moving on time
+
+[Blacklight](https://goblacklight.com){d} (Generation 2)..........................{/d}{g}2026-06 - NOW{/g}
+  - building incandescent analog space computers for ML/AI work
+  - active development, more on this soon!!
+
+  {d}Generation 1:................................2024-11 - 2026-05{/d}
+  - a project keeping the world on time with space lasers :)
+  - demoed an ultra-low-power optical comms with single photons
+
 [RS1 Block 2](https://ablspacesystems.com/rs1/){d}....................................{/d}2023-07 - 2024-08
   - 1,350 kg to LEO launch vehicle @ abl space systems
   - Flight 2: [anomaly report](https://x.com/longwalldefense/status/1828182472439611528/photo/1), test imagery, vehicle paint/livery
@@ -80,9 +88,11 @@ a few things along those lines i've written:
   - self-built liquid rocket, 265 lbf, N2O/E85, half cat style
   - fabrication ~70% done, Al 6061 + fiberglass airframe 
   - targeting flight [????] - [pictures](https://x.com/lavie154/status/2013889744392827319)
+
 Not A Pipe Bomb{d}................................{/d}2023-09 - 2024-09
   - Tripoli L2 certification, flown 3x, peak 4987 ft @ M1.06
   - pictures: [Flight 3](https://x.com/lavie154/status/1837274248026456540)
+
 Quark SV0{d}.............................................{/d}2023-05-20
   - L2 attempt, pathfinder for early 2.25" liquid rocket
   - Flight 1: Alt 8962 ft, Vel >M1.50, [pictures](https://x.com/lavie154/status/1659769898237837312)
