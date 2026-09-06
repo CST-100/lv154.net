@@ -2,8 +2,9 @@
 """lv154 TUI editor: source on the left, rendered preview on the right.
 
 Usage:
-  python3 tools/tui.py [options] [FILE]
+  python3 tools/tui.py [options] [FILE | new SLUG | page SLUG]
   make tui [FILE=posts/2026-05-17-hello.txt]
+  lv [FILE | new SLUG | page SLUG]      after --install (symlinks ~/.local/bin/lv)
 
 Options:
   --keys ctrl|helix         key style (config default, else ctrl)
@@ -13,6 +14,12 @@ Options:
                             ~/.config/lv154/tui.json)
   --init-config             write a starter config file and exit
   --man                     print the cheat sheet (usage, markup, keys) and exit
+  --install                 symlink this script as ~/.local/bin/lv and exit
+
+Publishing: F2 (or :publish [message]) saves, commits ONLY src/pages and
+src/posts, and pushes main; the server pulls main every few minutes.
+F3 (or :status) shows pending content changes. Unrelated changes elsewhere
+in the repo are never swept into a publish commit.
 
 Config is JSON:
   {
@@ -43,6 +50,7 @@ import json
 import locale
 import os
 import re
+import subprocess
 import sys
 import time
 from datetime import date
@@ -387,7 +395,8 @@ SPECIAL = {
     curses.KEY_PPAGE: "pgup", curses.KEY_NPAGE: "pgdn",
     curses.KEY_BACKSPACE: "backspace", curses.KEY_DC: "delete",
     curses.KEY_ENTER: "enter", curses.KEY_RESIZE: "resize",
-    curses.KEY_F1: "f1", curses.KEY_IC: "insert",
+    curses.KEY_F1: "f1", curses.KEY_F2: "f2", curses.KEY_F3: "f3",
+    curses.KEY_IC: "insert",
 }
 
 # Sequences ncurses hands back raw (ESC + these) because they're not in the
@@ -402,7 +411,7 @@ ESC_SEQ = {
     "[1;5C": "ctrl-right", "[1;5D": "ctrl-left",
     "[1;3C": "ctrl-right", "[1;3D": "ctrl-left",
     "[1;5H": "home", "[1;5F": "end",
-    "OP": "f1", "[11~": "f1",
+    "OP": "f1", "[11~": "f1", "OQ": "f2", "[12~": "f2", "OR": "f3", "[13~": "f3",
 }
 NAMED = {
     "kLFT5": "ctrl-left", "kRIT5": "ctrl-right",
@@ -453,13 +462,19 @@ HELP: list[tuple[str, str, list[str]]] = [
         "files       pages/<slug>.txt and posts/<YYYY-MM-DD>-<slug>.txt.",
         "            posts: line 1 = title, line 2 blank, then the body.",
         "            new files get a seed; a page also needs a config.json entry.",
-        "saving      writes the file only. commit + push by hand; the server",
-        "            pulls main every few minutes.",
+        "publish     F2 (or :publish [message]) saves, commits ONLY src/pages and",
+        "            src/posts, then pushes main. the server pulls main every few",
+        "            minutes; nothing else to do. F3 (or :status) shows what's",
+        "            pending. other changes in the repo are never swept in.",
         "picker      ^O (or space-f in helix mode): enter open, n new post,",
         "            N new page, d delete (asks first), esc close.",
         "",
         "always      ^S save   ^O files   ^N new post   ^P toggle preview",
-        "            ^Q quit   F1 help",
+        "            ^Q quit   F1 help   F2 publish   F3 git status",
+        "",
+        "anywhere    python3 tools/tui.py --install  symlinks ~/.local/bin/lv, then:",
+        "              lv                 picker        lv posts/<file>.txt   open",
+        "              lv new SLUG        today's post  lv page SLUG          page",
         "",
         "config      ~/.config/lv154/tui.json  (or $LV154_TUI_CONFIG)",
         "              keys: ctrl | helix",
@@ -481,6 +496,7 @@ HELP: list[tuple[str, str, list[str]]] = [
     ("ctrl", "ctrl keys", [
         "^S save        ^O files        ^N new post     ^P toggle preview",
         "^F find        ^G find next    ^Z undo         ^R redo         ^Q quit",
+        "F1 help        F2 publish      F3 git status",
         "",
         "arrows / home / end / pgup / pgdn move.  ^A ^E = line start / end.",
         "ctrl-left / ctrl-right jump by word.  tab inserts two spaces.",
@@ -528,6 +544,7 @@ HELP: list[tuple[str, str, list[str]]] = [
         "",
         "COMMANDS :w  :q  :q!  :wq        :e FILE   :o (picker)",
         "         :new SLUG   :page SLUG   :NUMBER goto line   :p toggle preview",
+        "         :publish [message]       :status (git, content only)",
         "         :keys ctrl|helix         :help [about|markup|ctrl|helix]",
     ]),
 ]
@@ -594,6 +611,53 @@ def list_entries() -> list[Path]:
     PAGES.mkdir(parents=True, exist_ok=True)
     POSTS.mkdir(parents=True, exist_ok=True)
     return sorted(PAGES.glob("*.txt")) + sorted(POSTS.glob("*.txt"), reverse=True)
+
+
+# ---- git --------------------------------------------------------------------
+
+CONTENT_PATHS = ["src/pages", "src/posts"]
+DEPLOY_BRANCH = "main"
+
+
+def git(*args: str, timeout: int = 60) -> tuple[int, str]:
+    """Run git in the repo. Never prompts: a push needing a passphrase fails fast."""
+    env = dict(os.environ)
+    env.setdefault("GIT_TERMINAL_PROMPT", "0")
+    env.setdefault("GIT_SSH_COMMAND", "ssh -o BatchMode=yes")
+    try:
+        r = subprocess.run(["git", *args], cwd=ROOT, capture_output=True,
+                           text=True, timeout=timeout, env=env)
+    except FileNotFoundError:
+        return 127, "git not found"
+    except subprocess.TimeoutExpired:
+        return 124, f"git {' '.join(args)} timed out after {timeout}s"
+    return r.returncode, (r.stdout + r.stderr).strip()
+
+
+def install_symlink(name: str = "lv") -> None:
+    target = Path(__file__).resolve()
+    bindir = Path.home() / ".local" / "bin"
+    bindir.mkdir(parents=True, exist_ok=True)
+    link = bindir / name
+    if link.is_symlink():
+        if link.resolve() == target:
+            print(f"{link} already points at {target}")
+        else:
+            link.unlink()
+            link.symlink_to(target)
+            print(f"re-pointed {link} -> {target}")
+    elif link.exists():
+        sys.exit(f"{link} exists and is not a symlink; remove it first")
+    else:
+        link.symlink_to(target)
+        print(f"linked {link} -> {target}")
+    try:
+        os.chmod(target, os.stat(target).st_mode | 0o111)
+    except OSError:
+        pass
+    if str(bindir) not in os.environ.get("PATH", "").split(":"):
+        print(f"note: {bindir} is not on PATH in this shell. log out and back in "
+              f"(ubuntu's .profile adds it), or: export PATH=\"{bindir}:$PATH\"")
 
 
 # ---- editor -----------------------------------------------------------------
@@ -1139,9 +1203,9 @@ class Editor:
             if self.mode == "insert":
                 hint = "esc normal   ^W del word   ^U del to start   F1 help"
             else:
-                hint = "i insert  x line  d y p  u U  w b e  / find  :w :q  spc-f files  F1 help"
+                hint = "i insert  x line  d y p  u U  w b e  / find  :w :q :publish  spc-f files  F1 help"
         else:
-            hint = "^S save  ^O files  ^N new post  ^F find  ^P preview  ^Z undo  ^R redo  F1 help  ^Q quit"
+            hint = "^S save  ^O files  ^N new  ^F find  ^P preview  ^Z/^R undo  F2 publish  F1 help  ^Q quit"
         if W - x - 2 < len(hint):
             hint = "F1 help"
         if W - x - 2 >= len(hint):
@@ -1325,8 +1389,21 @@ class Editor:
         except curses.error:
             return None
 
-    def read_key(self) -> str | None:
-        """Next key as a name. Assembles ESC sequences ncurses didn't recognise."""
+    def read_key(self, block: bool = False) -> str | None:
+        """Next key as a name. Assembles ESC sequences ncurses didn't recognise.
+
+        `block` forces a blocking read even inside the paste-drain loop, which
+        is what prompts and overlays need (otherwise they'd see "no key" and
+        cancel themselves).
+        """
+        if block:
+            self.scr.timeout(-1)
+        try:
+            return self._read_key()
+        finally:
+            self.scr.timeout(0 if self.in_burst else -1)
+
+    def _read_key(self) -> str | None:
         k = self.getkey()
         self.last_raw = k
         if k != "\x1b":
@@ -1336,7 +1413,12 @@ class Editor:
         try:
             while len(seq) < 16:
                 c = self.getkey()
-                if c is None or isinstance(c, int) or c == "\x1b":
+                if c is None:
+                    break
+                if isinstance(c, int) or c == "\x1b":
+                    # a whole key of its own (F2, arrows, another ESC): hand it
+                    # back so the next read_key sees it instead of losing it
+                    curses.ungetch(c) if isinstance(c, int) else curses.unget_wch(c)
                     break
                 seq += c
                 if len(seq) == 1 and c not in "[O":
@@ -1359,7 +1441,7 @@ class Editor:
         self.put(H - 1, 1, msg, self.colors.c("warn"))
         self.scr.noutrefresh()
         curses.doupdate()
-        return self.read_key()
+        return self.read_key(block=True)
 
     def confirm(self, msg: str) -> bool:
         return self.ask(msg + "  [y/N]") == "y"
@@ -1381,7 +1463,7 @@ class Editor:
                 pass
             self.scr.noutrefresh()
             curses.doupdate()
-            k = self.read_key()
+            k = self.read_key(block=True)
             if k in ("esc", "^C", "^Q"):
                 return None
             if k == "enter":
@@ -1397,29 +1479,17 @@ class Editor:
             elif k is not None and len(k) == 1 and k >= " ":
                 buf += k
 
-    def help(self, topic: str | None = None) -> None:
-        """Scrollable cheat sheet. F1 / :help [topic]."""
-        hdr = self.colors.c("hdr") | curses.A_BOLD
-        dim = self.colors.c("dim")
-        rows: list = []
-        starts: list[int] = []
-        for _sid, title, body in HELP:
-            starts.append(len(rows))
-            rows.append((f"# {title}", hdr))
-            rows.extend(body)
-            rows.append("")
-        if topic is None:
-            topic = self.keys
-        top = starts[HELP_TOPICS.get(topic, 0)]
-        hint = "j/k scroll  pgdn/pgup  1 about 2 markup 3 ctrl 4 helix  q close"
+    def show_text(self, title: str, rows: list, hint: str = "j/k scroll   q close",
+                  jumps: list[int] | None = None, top: int = 0) -> None:
+        """Scrollable read-only overlay."""
         while True:
             H, _ = self.scr.getmaxyx()
             page = max(1, H - 6)
-            top = max(0, min(top, len(rows) - page))
+            top = max(0, min(top, max(0, len(rows) - page)))
             self.draw()
-            self.overlay("help", rows[top:top + page], hint)
+            self.overlay(title, rows[top:top + page], hint)
             curses.doupdate()
-            k = self.read_key()
+            k = self.read_key(block=True)
             if k in ("q", "esc", "f1", "^Q", "^C", "enter"):
                 return
             if k in ("j", "down"):
@@ -1434,8 +1504,102 @@ class Editor:
                 top = 0
             elif k in ("G", "end"):
                 top = len(rows)
-            elif k in ("1", "2", "3", "4"):
-                top = starts[int(k) - 1]
+            elif jumps and len(k) == 1 and k.isdigit() and 0 < int(k) <= len(jumps):
+                top = jumps[int(k) - 1]
+
+    def help(self, topic: str | None = None) -> None:
+        """Scrollable cheat sheet. F1 / :help [topic]."""
+        hdr = self.colors.c("hdr") | curses.A_BOLD
+        rows: list = []
+        starts: list[int] = []
+        for _sid, title, body in HELP:
+            starts.append(len(rows))
+            rows.append((f"# {title}", hdr))
+            rows.extend(body)
+            rows.append("")
+        if topic is None:
+            topic = self.keys
+        self.show_text("help", rows,
+                       "j/k scroll  pgdn/pgup  1 about 2 markup 3 ctrl 4 helix  q close",
+                       jumps=starts, top=starts[HELP_TOPICS.get(topic, 0)])
+
+    # -- git ------------------------------------------------------------------
+
+    def git_status_rows(self) -> list[str]:
+        code, branch = git("rev-parse", "--abbrev-ref", "HEAD")
+        if code != 0:
+            return [f"git error: {branch}"]
+        note = "" if branch == DEPLOY_BRANCH else f"   (the site deploys from {DEPLOY_BRANCH})"
+        rows = [f"branch: {branch}{note}", ""]
+        code, out = git("status", "--porcelain", "--", *CONTENT_PATHS)
+        if code != 0:
+            return rows + [out]
+        rows.append("content changes:" if out else "content is clean: nothing to publish")
+        rows += ["  " + l for l in out.splitlines()]
+        code, ahead = git("rev-list", "--count", "@{u}..HEAD")
+        if code == 0 and ahead.strip() not in ("", "0"):
+            rows += ["", f"{ahead.strip()} local commit(s) not pushed yet"]
+        code, log = git("log", "--oneline", "-5")
+        if code == 0 and log:
+            rows += ["", "recent commits:"] + ["  " + l for l in log.splitlines()]
+        return rows
+
+    def status(self) -> None:
+        self.show_text("git status", self.git_status_rows())
+
+    def default_message(self) -> str:
+        if self.path is not None and self.path.parent == POSTS:
+            return f"post: {self.lines[0].strip() or self.path.stem}"
+        if self.path is not None and self.path.parent == PAGES:
+            return f"page: {self.path.stem}"
+        return "content update"
+
+    def publish(self, message: str | None = None) -> None:
+        """Save, then commit src/pages + src/posts only, then push the deploy branch."""
+        log: list[str] = []
+        if self.path is not None and self.dirty:
+            if not self.save():
+                return
+            log.append(f"saved {relpath(self.path)}")
+        code, branch = git("rev-parse", "--abbrev-ref", "HEAD")
+        if code != 0:
+            self.show_text("publish", [f"git error: {branch}"])
+            return
+        if branch != DEPLOY_BRANCH:
+            self.show_text("publish", [
+                f"on branch '{branch}', but the site deploys from '{DEPLOY_BRANCH}'.",
+                "switch branches in a shell, then publish again."])
+            return
+        code, changes = git("status", "--porcelain", "--", *CONTENT_PATHS)
+        if code != 0:
+            self.show_text("publish", [f"git error: {changes}"])
+            return
+        if not changes:
+            self.flash("nothing to publish: content matches the last commit")
+            return
+        msg = message or self.default_message()
+        n = len(changes.splitlines())
+        if not self.confirm(f'commit "{msg}" ({n} file(s)) and push {DEPLOY_BRANCH}?'):
+            return
+        log += ["changes:"] + ["  " + l for l in changes.splitlines()] + [""]
+        code, out = git("add", "-A", "--", *CONTENT_PATHS)
+        if code != 0:
+            self.show_text("publish", log + ["git add failed:", out])
+            return
+        code, out = git("commit", "-m", msg, "--", *CONTENT_PATHS)
+        log += [f"commit: {msg}"] + ["  " + l for l in out.splitlines()]
+        if code != 0:
+            self.show_text("publish", log + ["", "commit failed; nothing pushed."])
+            return
+        log.append("")
+        code, out = git("push", "origin", DEPLOY_BRANCH, timeout=90)
+        log += ["push:"] + ["  " + l for l in (out.splitlines() or ["ok"])]
+        if code != 0:
+            log += ["", "push failed; the commit is safe locally. run `git push` in a shell.",
+                    "(a passphrase or login prompt can't happen inside the tui, so it fails fast.)"]
+        else:
+            log += ["", f"done. the server pulls {DEPLOY_BRANCH} within ~5 min."]
+        self.show_text("publish", log)
 
     # -- files ----------------------------------------------------------------
 
@@ -1501,7 +1665,7 @@ class Editor:
             self.overlay("files", labels[top:top + rows], hint,
                          sel - top if entries else None)
             curses.doupdate()
-            k = self.read_key()
+            k = self.read_key(block=True)
             if k in ("esc", "q", "^O", "^Q", "^C"):
                 return
             if k in ("up", "k"):
@@ -1581,6 +1745,10 @@ class Editor:
             self.toggle_preview()
         elif k == "f1":
             self.help()
+        elif k == "f2":
+            self.publish()
+        elif k == "f3":
+            self.status()
         elif self.keys == "helix":
             self.handle_helix(k)
         else:
@@ -2034,6 +2202,10 @@ class Editor:
                 self.flash(f"keys: {self.keys}")
             else:
                 self.flash("usage: keys ctrl|helix")
+        elif name in ("publish", "pub"):
+            self.publish(" ".join(args) if args else None)
+        elif name in ("status", "st"):
+            self.status()
         elif name in ("h", "help"):
             self.help(args[0] if args else None)
         else:
@@ -2088,17 +2260,22 @@ def cli() -> None:
     os.environ.setdefault("ESCDELAY", "25")
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("file", nargs="?", help="posts/<date>-<slug>.txt or pages/<slug>.txt")
+    ap.add_argument("args", nargs="*", metavar="FILE | new SLUG | page SLUG",
+                    help="a file under src/pages or src/posts, or new/page + slug")
     ap.add_argument("--keys", choices=("ctrl", "helix"))
     ap.add_argument("--preview", choices=("site", "terminal"))
     ap.add_argument("--editor", choices=("site", "terminal"))
     ap.add_argument("--config", type=Path)
     ap.add_argument("--init-config", action="store_true")
     ap.add_argument("--man", action="store_true", help="print the cheat sheet and exit")
+    ap.add_argument("--install", action="store_true", help="symlink this script as ~/.local/bin/lv")
     a = ap.parse_args()
 
     if a.man:
         print(man_text())
+        return
+    if a.install:
+        install_symlink()
         return
 
     if a.init_config:
@@ -2119,8 +2296,24 @@ def cli() -> None:
         cfg["theme"]["editor"] = a.editor
     validate_config(cfg)
 
+    path: Path | None = None
     try:
-        path = resolve_arg(a.file) if a.file else None
+        if a.args and a.args[0] in ("new", "page"):
+            if len(a.args) != 2:
+                sys.exit(f"usage: {ap.prog} {a.args[0]} SLUG")
+            slug = a.args[1]
+            if a.args[0] == "new":
+                if not POST_SLUG_RE.match(slug):
+                    sys.exit("error: slug must be lowercase letters, digits, - or _")
+                path = POSTS / f"{date.today().isoformat()}-{slug}.txt"
+            else:
+                if not PAGE_SLUG_RE.match(slug):
+                    sys.exit("error: page slug must start with a letter; lowercase, digits, - or _")
+                path = PAGES / f"{slug}.txt"
+        elif len(a.args) == 1:
+            path = resolve_arg(a.args[0])
+        elif a.args:
+            sys.exit(f"usage: {ap.prog} [FILE | new SLUG | page SLUG]")
     except ValueError as e:
         sys.exit(f"error: {e}")
     custom = curses.wrapper(main, path, cfg)
