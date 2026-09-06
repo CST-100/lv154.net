@@ -25,7 +25,7 @@ also helped start a group called the [hot nozzle society](https://www.hotnozzles
 2021. did [some branding work](https://www.behance.net/gallery/167117365/Hot-Nozzle-Society-work), [designed](https://locprecision.com/collections/rockets-3-1-diameter/products/sky-fieri) and [flew](https://x.com/lavie154/status/1719034164220231807) some rockets,
 helped [organize some events](https://www.hotnozzlesociety.org/previousevents). on my own time, got level 1 and
 level 2 certified with the tripoli rocketry association
-(#28294). level 3? watch this space.
+(#28294). i'll do my L3 when it doesn't cost $2000 a flight.
 
 joined a scrappy lil rocket company called [abl space systems](https://ablspacesystems.com/)
 in 2023. got to [shoot some hotfires](https://www.youtube.com/watch?v=bJiZKsII3HM), helped [take some cool
@@ -38,11 +38,13 @@ day](https://x.com/ablspacesystems/status/1828182472439611528). joined a bunch o
 vacation](https://www.linkedin.com/feed/update/urn:li:activity:7235130720954826753/) in august 2024.
 
 since feb 2025, a few friends and i have been toying with a
-project called [{g}Blacklight{/g}](https://goblacklight.com). there's space lasers, optics,
-and all sorts of other cool stuff. we'll see where that goes –
-if you want to help keep the world running on time, hit my line
-and let's talk!
+project called [{g}Blacklight{/g}](https://goblacklight.com), our home for a lot of wacky space-
+tech R&D projects. we previously did a lot of work on optical
+GPS/PNT via space lasers, which was quite fun!
 
+starting june 2026, we've been working on generation 2 in-space
+computing using incandescent-hot analog devices. if this sounds
+like something you're interested in, we should talk! 
 
 // signal and noise                                           {d}03{/d}
 
