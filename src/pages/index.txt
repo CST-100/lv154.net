@@ -8,7 +8,7 @@ by night.
 
 // a little more about me                                     {d}01{/d}
 
-existing at the intersection of space, urbanism, photography,
+  existing at the intersection of space, urbanism, photography,
 design, and a general love for things that move fast. los
 angeles native representing the 818 til the day i die. one of
 {trans}those{/trans} folks, if you couldn't already tell.
@@ -16,18 +16,18 @@ angeles native representing the 818 til the day i die. one of
 
 // the story so far                                           {d}02{/d}
 
-started and led [a team called space scout](https://www.spacescout.info/) from 2019 until
+  started and led [a team called space scout](https://www.spacescout.info/) from 2019 until
 2023. broke some barriers, and the news about the [birth of a
 new lunar human spaceflight program](https://www.spacescout.info/2021/10/long-term-future-sls/), and [wrote about some
 test flights](https://medium.com/p/df3585d9e39d).
 
-also helped start a group called the [hot nozzle society](https://www.hotnozzlesociety.org/) in
+  also helped start a group called the [hot nozzle society](https://www.hotnozzlesociety.org/) in
 2021. did [some branding work](https://www.behance.net/gallery/167117365/Hot-Nozzle-Society-work), [designed](https://locprecision.com/collections/rockets-3-1-diameter/products/sky-fieri) and [flew](https://x.com/lavie154/status/1719034164220231807) some rockets,
 helped [organize some events](https://www.hotnozzlesociety.org/previousevents). on my own time, got level 1 and
 level 2 certified with the tripoli rocketry association
 (#28294). i'll do my L3 when it doesn't cost $2000 a flight.
 
-joined a scrappy lil rocket company called [abl space systems](https://ablspacesystems.com/)
+  joined a scrappy lil rocket company called [abl space systems](https://ablspacesystems.com/)
 in 2023. got to [shoot some hotfires](https://www.youtube.com/watch?v=bJiZKsII3HM), helped [take some cool
 photos](https://www.linkedin.com/feed/update/urn:li:activity:7146545723969351680/), poked at some test stands in the desert, and pursued
 a bunch of other cool opportunities. switched to the dark side
@@ -37,23 +37,23 @@ development team. got to tell the world about [a not-so-very-fun
 day](https://x.com/ablspacesystems/status/1828182472439611528). joined a bunch of friends on an [involuntary 2-month paid
 vacation](https://www.linkedin.com/feed/update/urn:li:activity:7235130720954826753/) in august 2024.
 
-a few friends and i started [{g}Blacklight{/g}](https://goblacklight.com) in november 2024 as a
+  a few friends and i started [{g}Blacklight{/g}](https://goblacklight.com) in november 2024 as a
 home for unconventional space-tech R&D nobody else was working
 on. we spent a year demonstrating ultra low SNR optical comms
 and PNT and learned a lot from that! but shelved entering 2026.
 
-since june 2026, we've been working on generation 2 in-space
+  since june 2026, we've been working on generation 2 in-space
 computing using incandescent-hot analog devices. if that sounds
 like your kind of thing, we should definitely talk.
  
 
 // signal and noise                                           {d}03{/d}
 
-i talk a lot, some would say too much. i have a [medium page](https://lavieohana.medium.com/)
+  i talk a lot, some would say too much. i have a [medium page](https://lavieohana.medium.com/)
 where i rant about the space industry, public policy, and all
 sorts of other stuff.
 
-a few things along those lines i've written:
+  a few things along those lines i've written:
 [Unknown Unknowns](https://lavieohana.medium.com/unknown-unknowns-3e69c82550ed){d}......................................{/d}2026-05-29
 [Starship IV: The Future](https://medium.com/@lavieohana/starship-iv-the-future-cc07c4b66544){d}...............................{/d}2026-02-03
 [Starship III: Risk](https://lavieohana.medium.com/starship-iii-risk-8cb0adf24769){d}....................................{/d}2024-11-24
@@ -106,7 +106,7 @@ to figure out, most of my interests are an extension of that.
 
 / what i've been reading
 
-in no specific order (papers, books, blog posts i liked):
+  in no specific order (papers, books, blog posts i liked):
 
 Everything Now{d}................................{/d}Rosecrans Baldwin
 [Wayne Hale's Blog](https://waynehale.wordpress.com/){d}....................................{/d}Wayne Hale
@@ -118,7 +118,7 @@ Challenger{d}....................................{/d}Adam Higginbotham
 
 / what i'm listening to
 
-usually a mix of a whole lot of things. [emperor x](https://crmatheny.net/board/) remains my
+  usually a mix of a whole lot of things. [emperor x](https://crmatheny.net/board/) remains my
 favorite of all time. but i'll listen to anything. lately:
 magdalena bay, the mountain goats, rush, dutch uncles, subsonic
 eye, origami angel, everything everything. regrettably, i like
@@ -126,7 +126,7 @@ coldplay.
 
 / games
 
-haven't been playing much lately, but have always had a soft
+  haven't been playing much lately, but have always had a soft
 spot in my heart for kerbal space program (duh). forever a
 temporarily retired EVE online second lifer. i'm in Celeste,
 if you [know where to look](https://x.com/PowerUpAudio/status/1172338982916513793/photo/3). risk of rain 1, cities skylines, and
@@ -136,5 +136,6 @@ a few others.
 
 / credits
 
-you know who you are, and thank you :)
-AA AB AM AP CR CV CW EX JD LD MW NA SC SO TE
+  you know who you are, and thank you :)
+  
+  AA AB AM AP CR CV CW EX JD LD MW NA SC SO TE
