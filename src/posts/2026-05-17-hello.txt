@@ -1,6 +1,0 @@
-hello, world
-
-this is a smoke-test post to verify the posts pipeline. it does
-seem to work, so that's pretty cool.
-
-:)
