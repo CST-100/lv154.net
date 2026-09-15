@@ -69,6 +69,21 @@ def warn_overruns(label: str, text: str) -> None:
         print(f"  warn: {label} L{ln} is {w} cols (max {MAX_COLS})")
 
 
+def truncate_to(s: str, width: int, ellipsis: str = "\u2026") -> str:
+    """Clip `s` to at most `width` display columns, ending in `ellipsis` if cut."""
+    if display_width(s) <= width:
+        return s
+    budget = width - display_width(ellipsis)
+    out, used = [], 0
+    for ch in s:
+        w = char_width(ch)
+        if used + w > budget:
+            break
+        out.append(ch)
+        used += w
+    return "".join(out).rstrip() + ellipsis
+
+
 def expand_trans(text: str) -> str:
     def sub(m: re.Match) -> str:
         word = m.group(1)
@@ -197,7 +212,9 @@ def build_post(post: dict, config: dict, template: str) -> None:
     )
     body = header + render_source(post["body"])
 
-    page = render_page(template, config, "posts", body)
+    # A post is *under* /posts/ but is not the posts index, so keep every nav
+    # item (including POSTS) linked. The slug just has to miss every nav slug.
+    page = render_page(template, config, f"posts/{post['slug']}", body)
 
     out = DIST / "posts" / post["slug"] / "index.html"
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -214,10 +231,13 @@ def render_posts_index(posts: list[dict]) -> str:
         '',
     ]
     for p in posts:
-        title = html.escape(p["title"])
-        link = f'<a href="/posts/{p["slug"]}/">{title}</a>'
-        vis = display_width(p["title"])
-        pad = max(2, 64 - vis - len(p["date"]))
+        # Row layout: title, >=2 spaces of gutter, date, right-aligned to 64.
+        budget = MAX_COLS - 2 - len(p["date"])
+        title = truncate_to(p["title"], budget)
+        if title != p["title"]:
+            print(f"  warn: posts index: title of {p['slug']} clipped to {budget} cols")
+        link = f'<a href="/posts/{p["slug"]}/">{html.escape(title)}</a>'
+        pad = max(2, MAX_COLS - display_width(title) - len(p["date"]))
         lines.append(link + " " * pad + p["date"])
     return "\n".join(lines)
 
