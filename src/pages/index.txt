@@ -53,7 +53,7 @@ like your kind of thing, we should definitely talk.
 where i rant about the space industry, public policy, and all
 sorts of other stuff.
 
-  a few things along those lines i've written:
+/ a few things along those lines i've written:
 [Unknown Unknowns](https://lavieohana.medium.com/unknown-unknowns-3e69c82550ed){d}......................................{/d}2026-05-29
 [Starship IV: The Future](https://medium.com/@lavieohana/starship-iv-the-future-cc07c4b66544){d}...............................{/d}2026-02-03
 [Starship III: Risk](https://lavieohana.medium.com/starship-iii-risk-8cb0adf24769){d}....................................{/d}2024-11-24
@@ -61,6 +61,14 @@ sorts of other stuff.
 [Starship I: Orbital Flight Test](https://medium.com/@lavieohana/starship-oft-thoughts-15573f6b9cea){d}.......................{/d}2023-04-21
 [NASA moves to procure a 2nd lunar lander](https://www.spacescout.info/2022/09/second-lunar-lander-rfp/){d}..............{/d}2022-09-17
 [NASA's long term vision for SLS](https://www.spacescout.info/2021/10/long-term-future-sls/){d}.......................{/d}2021-10-26
+
+  this site also has some of my personal ranting under [POSTS](https://lv154.net/posts/).
+for now, i'm working on a series on my 2026 trip to Ukraine. if
+you'd like to read more...
+
+/ lessons From Ukraine:
+[PART 1: The Capital of the End of the World](https://lv154.net/posts/lessons-from-ukraine-pt1){d}...........{/d}2026-09-15
+{d}PARTS 2-4+: ???......................................COMING SOON{/d}
 
 
 // things i've built                                          {d}04{/d}
