@@ -17,6 +17,7 @@ make deploy        # build + rsync dist/ to Dreamhost (needs DH_USER/DH_HOST/DH_
 - `src/template.html` — outer chrome (header, nav, body slot, socials, systems-block JS).
 - `src/pages/<slug>.txt` — page bodies. Only slugs listed in `config.pages` are built.
 - `src/posts/<YYYY-MM-DD-slug>.txt` — blog posts. Filename encodes date+slug. First line = title, line 2 blank, rest = body. Auto-discovered; not in `config.pages`.
+- `src/drafts/<slug>.txt` — posts in progress. Same format as a post, no date. Gitignored, never built, never published; the TUI's `:post` moves one into `src/posts` with today's date.
 - `src/status.json` — live systems block data. Bind-mounted into the container so host-side cron can update it without rebuilding.
 
 Output:
@@ -45,13 +46,15 @@ Pipeline lives in `build.py` (`render_source` → `render_inline`). `{systems}` 
 Two local editors, both showing per-line *visible* width (markup stripped) against the 64-col limit and a rendered preview:
 
 - `make tui` — curses TUI (`tools/tui.py`, stdlib only). Source pane with highlighted markup + gutter widths on the left, rendered preview on the right. `make tui FILE=posts/2026-05-17-hello.txt` opens a file directly; no arg opens the file picker. `make tui ARGS="--keys helix"` passes flags. F1 (or `:help [about|markup|ctrl|helix]`) opens a scrollable cheat sheet; `python3 tools/tui.py --man` prints it.
-  - Two key styles: `ctrl` (default: `^S` save, `^O` files, `^N` new post, `^F` find, `^P` preview, `^Z`/`^R` undo/redo, `^Q` quit) and `helix` (modal: `h j k l w b e x d c y p u U`, `i a o`, `/`, `:w :q :e :new :page :keys`, `space-f` files). `^S ^O ^P ^Q F1` work in both.
+  - Two key styles: `ctrl` (default: `^S` save, `^O` files, `^N` new post, `^F` find, `^P` preview, `^Z`/`^R` undo/redo, `^Q` quit, `^Y` copy line to clipboard) and `helix` (modal: `h j k l w b e x d c y p u U`, `i a o`, `/`, `:w :q :e :new :page :keys :copy`, `space-f` files, `space-y` copy selection to clipboard). `^S ^O ^P ^Q F1` work in both. Clipboard copy goes through the first of `clip.exe`, `pbcopy`, `wl-copy`, `xclip` found on PATH.
   - Theme: preview pane paints the site's fg/bg by default; editor pane uses the terminal's colours. Config at `~/.config/lv154/tui.json` (or `$LV154_TUI_CONFIG`; `--init-config` writes a starter): `keys`, `theme.preview`/`theme.editor` (`site`|`terminal`), `palette` (`#rrggbb` overrides). Flags `--keys --preview --editor --config` override the file.
-  - Publish from inside: `F2` / `:publish [message]` saves, commits **only** `src/pages` + `src/posts`, pushes `main` (refuses on other branches). `F3` / `:status` shows pending content changes. Unrelated changes elsewhere in the tree are never swept in.
-  - One command from anywhere: `python3 tools/tui.py --install` symlinks `~/.local/bin/lv` to the script (re-run after moving the repo). Then `lv`, `lv posts/<file>.txt`, `lv new <slug>` (today's post, created on first save), `lv page <slug>`.
+  - Drafts: `^N` / `:new <slug>` / `lv new <slug>` start a post as `src/drafts/<slug>.txt`, which `:publish` never touches. `:post [YYYY-MM-DD]` moves it into `src/posts` (dated today by default); `:unpost` moves a post back to drafts. In the picker, `p` does either for the highlighted file.
+  - Long lines: a source line wider than 64 visible columns soft-wraps in both panes at word boundaries, at the same points the build hard-wraps it for the site. `:fmt` hard-wraps the selected lines (`:fmt all` the whole file) and `:post` wraps a draft's body on the way out. Lines that fit are never touched.
+  - Publish from inside: `F2` / `:publish [message]` saves, commits **only** `src/pages` + `src/posts`, pushes `main` (refuses on other branches). It fetches first and refuses when `origin/main` has commits the clone lacks (`git pull --rebase --autostash`, then retry); if the push fails the commit stays local and the failure lingers in the footer, and `:publish` on a clean tree retries the push. `F3` / `:status` shows pending content changes, unpushed/unpulled commit counts, and the list of local drafts. Unrelated changes elsewhere in the tree are never swept in.
+  - One command from anywhere: `python3 tools/tui.py --install` symlinks `~/.local/bin/lv` to the script (re-run after moving the repo). Then `lv`, `lv posts/<file>.txt`, `lv new <slug>` (a draft, created on first save), `lv page <slug>`.
 - `make edit` — browser version (`tools/edit.py` + `tools/edit.html`) on `127.0.0.1:8001`.
 
-Width logic (`visible_text`, `line_widths`, `overruns`) lives in `build.py`; the build prints a `warn:` line for any source line wider than 64 visible columns but does not fail.
+Width logic (`visible_text`, `line_widths`, `overruns`) lives in `build.py`. The build hard-wraps any source line wider than 64 visible columns at word boundaries (`wrap_text`; continuation lines start at column 0; a post's title line is exempt) and prints a `wrap:` line for each. Source files are never modified by the build; the TUI's `:fmt` / `:post` write the same wrap into the file.
 
 ## Adding things
 
@@ -62,7 +65,7 @@ Width logic (`visible_text`, `line_widths`, `overruns`) lives in `build.py`; the
 4. `make build`.
 
 **New post:**
-1. Drop `src/posts/2026-05-17-some-slug.txt` (first line = title, blank line, body).
+1. Drop `src/posts/2026-05-17-some-slug.txt` (first line = title, blank line, body). Or `lv new some-slug`, write it as a draft, then `:post` when it's ready.
 2. `make build`. It shows up at `/posts/some-slug/` and on `/posts/`.
 
 ## Deploy

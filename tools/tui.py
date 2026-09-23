@@ -17,9 +17,25 @@ Options:
   --install                 symlink this script as ~/.local/bin/lv and exit
 
 Publishing: F2 (or :publish [message]) saves, commits ONLY src/pages and
-src/posts, and pushes main; the server pulls main every few minutes.
+src/posts, and pushes main; the server pulls main every few minutes. It
+fetches first and refuses when origin/main has commits this clone lacks;
+a failed push leaves the commit local and :publish retries it.
 F3 (or :status) shows pending content changes. Unrelated changes elsewhere
 in the repo are never swept into a publish commit.
+
+Drafts: `new SLUG` (^N, :new) starts a post as src/drafts/<slug>.txt, which
+is never built, published or committed (src/drafts is gitignored). :post
+[YYYY-MM-DD] moves it into src/posts dated today, ready to :publish; :unpost
+moves a post back. The picker's p key does the same for the highlighted file.
+
+Long lines: anything wider than 64 visible columns soft-wraps in both panes
+at word boundaries, exactly where the build wraps it for the site; the
+continuation lines start at column 0. Lines that fit are never touched.
+:post and :fmt [all] write the wrap into the file.
+
+Clipboard: space-y (helix), ^Y (ctrl) or :copy push the selection (ctrl keys:
+the current line) to the system clipboard through whichever of clip.exe,
+pbcopy, wl-copy or xclip is on PATH, and yank it too.
 
 Config is JSON:
   {
@@ -50,6 +66,7 @@ import json
 import locale
 import os
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -65,6 +82,7 @@ from edit import PAGE_NAME_RE, POST_NAME_RE  # noqa: E402
 SRC = ROOT / "src"
 PAGES = SRC / "pages"
 POSTS = SRC / "posts"
+DRAFTS = SRC / "drafts"     # posts in progress: not built, not published, gitignored
 
 MAX_COLS = build.MAX_COLS
 NEAR_COLS = MAX_COLS - 4
@@ -76,6 +94,9 @@ GROUP_SECS = 1.0        # ctrl mode: keystrokes closer than this share one undo 
 
 POST_SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9_-]*$")
 PAGE_SLUG_RE = re.compile(r"^[a-z][a-z0-9_-]*$")
+DATE_PREFIX_RE = re.compile(r"^\d{4}-\d{2}-\d{2}-")
+# a draft is <slug>.txt; a dated name (a post moved in by hand) is fine too
+DRAFT_NAME_RE = re.compile(r"^(\d{4}-\d{2}-\d{2}-)?[a-z0-9][a-z0-9_-]*\.txt$")
 
 POST_SEED = "Untitled post\n\n"
 
@@ -445,11 +466,40 @@ def keyname(k) -> str | None:
     return k
 
 
+CLIPBOARD_TOOLS = (
+    ["clip.exe"],                          # WSL -> the Windows clipboard
+    ["pbcopy"],                            # macOS
+    ["wl-copy"],                           # Wayland
+    ["xclip", "-selection", "clipboard"],  # X11
+)
+
+
+def clipboard_copy(text: str) -> str | None:
+    """Push `text` to the system clipboard; returns the tool used, or None.
+
+    Tries each CLIPBOARD_TOOLS entry that is on PATH and moves on when one
+    fails (xclip without a DISPLAY, say). Output goes to /dev/null rather
+    than a pipe so tools that fork and linger to serve the selection can't
+    hold us up.
+    """
+    for cmd in CLIPBOARD_TOOLS:
+        if shutil.which(cmd[0]) is None:
+            continue
+        try:
+            subprocess.run(cmd, input=text.encode("utf-8"), check=True,
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                           timeout=5)
+            return cmd[0]
+        except (OSError, subprocess.SubprocessError):
+            continue
+    return None
+
+
 # Cheat sheet. Shown by F1 / :help [topic] inside the editor, printed by --man.
 # Keep lines <= 78 columns so the overlay fits.
 HELP: list[tuple[str, str, list[str]]] = [
     ("about", "using the editor", [
-        "lv154 tui edits src/pages/*.txt and src/posts/*.txt for the site.",
+        "lv154 tui edits src/pages, src/drafts and src/posts (*.txt) for the site.",
         "",
         "left pane   the source. markup is highlighted in place. the gutter shows",
         "            the line number and the line's VISIBLE width once markup is",
@@ -459,22 +509,36 @@ HELP: list[tuple[str, str, list[str]]] = [
         "footer      cursor line/col, current line's visible (and source) width,",
         "            overrun summary, and status messages.",
         "",
-        "files       pages/<slug>.txt and posts/<YYYY-MM-DD>-<slug>.txt.",
+        "files       pages/<slug>.txt  drafts/<slug>.txt  posts/<YYYY-MM-DD>-<slug>.txt",
         "            posts: line 1 = title, line 2 blank, then the body.",
         "            new files get a seed; a page also needs a config.json entry.",
+        "drafts      ^N (or :new SLUG, lv new SLUG) starts a post in src/drafts/.",
+        "            drafts are saved locally only: never built, published or",
+        "            committed (the dir is gitignored). :post [YYYY-MM-DD] moves",
+        "            one into src/posts dated today; then publish. :unpost moves",
+        "            a post back. in the picker, p does either for the highlight.",
+        "long lines  a line wider than 64 wraps at word boundaries in the preview,",
+        "            on the site (the build wraps it) and into the file with :post",
+        "            or :fmt; continuation lines start at column 0. lines that fit",
+        "            are never touched, so a paragraph can stay one long line while",
+        "            you draft. the editor soft-wraps at its own width; j/k move by",
+        "            screen row.",
         "publish     F2 (or :publish [message]) saves, commits ONLY src/pages and",
         "            src/posts, then pushes main. the server pulls main every few",
         "            minutes; nothing else to do. F3 (or :status) shows what's",
         "            pending. other changes in the repo are never swept in.",
-        "picker      ^O (or space-f in helix mode): enter open, n new post,",
-        "            N new page, d delete (asks first), esc close.",
+        "            it fetches first and refuses if origin has moved (pull in a",
+        "            shell, then retry). if a push fails the commit stays local;",
+        "            :publish again retries the push.",
+        "picker      ^O (or space-f in helix mode): enter open, n new draft,",
+        "            N new page, p post / unpost, d delete (asks first), esc close.",
         "",
-        "always      ^S save   ^O files   ^N new post   ^P toggle preview",
+        "always      ^S save   ^O files   ^N new draft   ^P toggle preview",
         "            ^Q quit   F1 help   F2 publish   F3 git status",
         "",
         "anywhere    python3 tools/tui.py --install  symlinks ~/.local/bin/lv, then:",
         "              lv                 picker        lv posts/<file>.txt   open",
-        "              lv new SLUG        today's post  lv page SLUG          page",
+        "              lv new SLUG        new draft     lv page SLUG          page",
         "",
         "config      ~/.config/lv154/tui.json  (or $LV154_TUI_CONFIG)",
         "              keys: ctrl | helix",
@@ -494,13 +558,14 @@ HELP: list[tuple[str, str, list[str]]] = [
         "text is HTML-escaped, so < > & are safe to type as-is.",
     ]),
     ("ctrl", "ctrl keys", [
-        "^S save        ^O files        ^N new post     ^P toggle preview",
+        "^S save        ^O files        ^N new draft    ^P toggle preview",
         "^F find        ^G find next    ^Z undo         ^R redo         ^Q quit",
-        "F1 help        F2 publish      F3 git status",
+        "F1 help        F2 publish      F3 git status   ^Y copy line to clipboard",
         "",
         "arrows / home / end / pgup / pgdn move.  ^A ^E = line start / end.",
         "ctrl-left / ctrl-right jump by word.  tab inserts two spaces.",
         "undo groups quick consecutive typing; a paste is one undo step.",
+        "long lines soft-wrap in both panes; :post (picker p) hard-wraps them at 64.",
         "to use helix keys instead: --keys helix, or \"keys\": \"helix\" in the config.",
     ]),
     ("helix", "helix keys", [
@@ -533,6 +598,7 @@ HELP: list[tuple[str, str, list[str]]] = [
         "         c    change: delete, then insert",
         "         y    yank      p P   paste after / before the selection",
         "              (a yanked whole line pastes as its own line)",
+        "         space y   yank AND copy to the system clipboard",
         "         R    replace the selection with the yanked text",
         "         r<c> replace every selected char with <c>",
         "         u U  undo / redo: one step per command or per insert session",
@@ -543,9 +609,12 @@ HELP: list[tuple[str, str, list[str]]] = [
         "         a count prefixes most keys: 5j  2w  3x  4u",
         "",
         "COMMANDS :w  :q  :q!  :wq        :e FILE   :o (picker)",
-        "         :new SLUG   :page SLUG   :NUMBER goto line   :p toggle preview",
+        "         :new SLUG (a draft)   :page SLUG   :NUMBER goto line   :p preview",
+        "         :post [YYYY-MM-DD]  draft -> src/posts     :unpost  post -> draft",
+        "         :fmt [all]  hard-wrap the selected lines (all: whole file) at 64",
         "         :publish [message]       :status (git, content only)",
         "         :keys ctrl|helix         :help [about|markup|ctrl|helix]",
+        "         :copy  selection -> system clipboard (same as space y)",
     ]),
 ]
 HELP_TOPICS = {sid: i for i, (sid, _t, _b) in enumerate(HELP)}
@@ -566,14 +635,14 @@ def man_text() -> str:
 # ---- files ------------------------------------------------------------------
 
 def validate_path(p: Path) -> Path:
-    """Resolve `p` and require it to be src/pages/<slug>.txt or src/posts/<date>-<slug>.txt."""
+    """Resolve `p` and require it to be src/{pages,drafts}/<slug>.txt or src/posts/<date>-<slug>.txt."""
     p = p.resolve()
     try:
         rel = p.relative_to(SRC.resolve())
     except ValueError:
         raise ValueError(f"{p} is not under src/")
     if len(rel.parts) != 2:
-        raise ValueError("expected src/pages/<file>.txt or src/posts/<file>.txt")
+        raise ValueError("expected src/pages/, src/drafts/ or src/posts/<file>.txt")
     bucket, name = rel.parts
     if bucket == "pages":
         if not PAGE_NAME_RE.match(name):
@@ -581,8 +650,11 @@ def validate_path(p: Path) -> Path:
     elif bucket == "posts":
         if not POST_NAME_RE.match(name):
             raise ValueError("post name must be YYYY-MM-DD-slug.txt")
+    elif bucket == "drafts":
+        if not DRAFT_NAME_RE.match(name):
+            raise ValueError("draft name must be slug.txt")
     else:
-        raise ValueError("only src/pages and src/posts are editable")
+        raise ValueError("only src/pages, src/drafts and src/posts are editable")
     return p
 
 
@@ -610,7 +682,9 @@ def relpath(p: Path | None) -> str:
 def list_entries() -> list[Path]:
     PAGES.mkdir(parents=True, exist_ok=True)
     POSTS.mkdir(parents=True, exist_ok=True)
-    return sorted(PAGES.glob("*.txt")) + sorted(POSTS.glob("*.txt"), reverse=True)
+    DRAFTS.mkdir(parents=True, exist_ok=True)
+    return (sorted(PAGES.glob("*.txt")) + sorted(DRAFTS.glob("*.txt"))
+            + sorted(POSTS.glob("*.txt"), reverse=True))
 
 
 # ---- git --------------------------------------------------------------------
@@ -678,8 +752,12 @@ class Editor:
         self.saved_text: str | None = ""
         self.cy = self.cx = 0
         self.want_x: int | None = None
-        self.scroll_y = self.scroll_x = 0
+        self.scroll_y = self.scroll_row = 0   # top line, and which of its rows is on top
         self.body_h = 1
+        self.wrap_w = 10 ** 9       # editor wrap width; draw() sets it from the layout
+        self.wrap_mode = "edit"     # split | edit | preview, also from draw()
+        self._lc_key: tuple | None = None
+        self._lc: tuple = ([], [], {})
         self.undo_stack: list[tuple[list[str], int, int]] = []
         self.redo_stack: list[tuple[list[str], int, int]] = []
         self.last_edit: tuple[str | None, float] = (None, 0.0)
@@ -719,7 +797,7 @@ class Editor:
             self.saved_text = text
         else:
             if seed is None:
-                seed = POST_SEED if path.parent == POSTS else page_seed(path.stem)
+                seed = POST_SEED if path.parent in (POSTS, DRAFTS) else page_seed(path.stem)
             text = seed
             self.saved_text = None
         self.set_text(text)
@@ -735,7 +813,7 @@ class Editor:
     def reset_view(self) -> None:
         self.cy = self.cx = 0
         self.want_x = None
-        self.scroll_y = self.scroll_x = 0
+        self.scroll_y = self.scroll_row = 0
         self.undo_stack.clear()
         self.redo_stack.clear()
         self.last_edit = (None, 0.0)
@@ -746,7 +824,7 @@ class Editor:
 
     def save(self) -> bool:
         if self.path is None:
-            self.flash("no file open  (^N new post, ^O files)")
+            self.flash("no file open  (^N new draft, ^O files)")
             return False
         data = self.text()
         self.path.parent.mkdir(parents=True, exist_ok=True)
@@ -898,16 +976,42 @@ class Editor:
         return len(self.lines[y])
 
     def move_v(self, dy: int) -> None:
+        """Move by screen rows (a wrapped line has several). Past the first or
+        last row of the buffer the cursor goes to that line's start / end."""
         if self.want_x is None:
-            self.want_x = self.col_of(self.cy, self.cx)
-        ny = max(0, min(self.cy + dy, len(self.lines) - 1))
-        if ny == self.cy:
-            self.cx = 0 if dy < 0 else len(self.lines[self.cy])
-            self.want_x = None
-        else:
-            self.cy = ny
-            self.cx = self.idx_for_col(ny, self.want_x)
+            self.want_x = self.cursor_seg()[1]
+        step = 1 if dy > 0 else -1
+        for _ in range(abs(dy)):
+            if not self.step_row(step):
+                self.cx = 0 if dy < 0 else len(self.lines[self.cy])
+                self.want_x = None
+                break
         self.reset_group()
+
+    def step_row(self, step: int) -> bool:
+        """One screen row up (-1) or down (+1), keeping want_x. False at the ends."""
+        s, _x = self.cursor_seg()
+        er, _pr = self.rows_of(self.cy)
+        ln = self.cy
+        if 0 <= s + step < len(er):
+            s += step
+        elif 0 <= ln + step < len(self.lines):
+            ln += step
+            er, _pr = self.rows_of(ln)
+            s = 0 if step > 0 else len(er) - 1
+        else:
+            return False
+        cells = self.layout_cache()[0][ln]
+        want = self.want_x or 0
+        # the row covers [start, next start); the last row also takes cx == len
+        start = er[s][0]
+        stop = er[s + 1][0] if s + 1 < len(er) else len(cells) + 1
+        x, i = 0, start
+        while i < min(stop, len(cells)) and x + cells[i][3] <= want:
+            x += cells[i][3]
+            i += 1
+        self.cy, self.cx = ln, min(i, stop - 1)
+        return True
 
     def move_h(self, dx: int, wrap: bool = True) -> None:
         if dx < 0:
@@ -1107,17 +1211,83 @@ class Editor:
             return "preview", W - GUTTER_W, 0
         return "edit", W - GUTTER_W, 0
 
-    def clamp_scroll(self, body_h: int, edit_w: int) -> None:
-        if self.cy < self.scroll_y:
-            self.scroll_y = self.cy
-        elif self.cy >= self.scroll_y + body_h:
-            self.scroll_y = self.cy - body_h + 1
-        self.scroll_y = max(0, min(self.scroll_y, max(0, len(self.lines) - 1)))
-        col = self.col_of(self.cy, self.cx)
-        if col < self.scroll_x:
-            self.scroll_x = col
-        elif col >= self.scroll_x + edit_w:
-            self.scroll_x = col - edit_w + 1
+    # -- soft wrap ------------------------------------------------------------
+    # Both panes wrap lines that don't fit: the preview at 64 visible columns,
+    # exactly where the build (and :post / :fmt) hard-wraps them; the editor at
+    # its own width. A line takes max(editor rows, preview rows) screen rows so
+    # the two panes stay line-aligned. Lines that fit are drawn as before.
+
+    def layout_cache(self) -> tuple[list, list[int], dict]:
+        """(scan_lines cells, visible widths, per-line row cache) for the buffer."""
+        key = (self.lines, self.wrap_w, self.wrap_mode)
+        if self._lc_key is None or self._lc_key != key:
+            self._lc_key = (list(self.lines), self.wrap_w, self.wrap_mode)
+            text = self.text()
+            self._lc = (scan_lines(text), build.line_widths(text), {})
+        return self._lc
+
+    def rows_of(self, ln: int) -> tuple[list[tuple[int, int]], list[tuple[int, int]]]:
+        """(editor rows, preview rows) of line `ln` as (start, end) cell ranges,
+        see build.wrap_rows."""
+        slines, _w, cache = self.layout_cache()
+        if ln not in cache:
+            cells = slines[ln]
+            spaces = [ch == " " and not tag for ch, _s, tag, _w in cells]
+            one = [(0, len(cells))]
+            er = pr = one
+            if self.wrap_mode != "preview":
+                er = build.wrap_rows([w for *_r, w in cells], spaces, self.wrap_w)
+            if self.wrap_mode != "edit":
+                pr = build.wrap_rows([0 if tag else w for _c, _s, tag, w in cells],
+                                     spaces, MAX_COLS)
+            cache[ln] = (er, pr)
+        return cache[ln]
+
+    def nrows(self, ln: int) -> int:
+        er, pr = self.rows_of(ln)
+        return max(len(er), len(pr))
+
+    def cursor_seg(self) -> tuple[int, int]:
+        """(editor row within line cy, x cell offset in that row) of the cursor."""
+        er, _pr = self.rows_of(self.cy)
+        cells = self.layout_cache()[0][self.cy]
+        s = 0
+        for i, (a, _b) in enumerate(er):
+            if a <= self.cx:
+                s = i
+        return s, sum(w for *_r, w in cells[er[s][0]:self.cx])
+
+    def visible_rows(self, body_h: int) -> list[tuple[int, int]]:
+        """(line, row within the line) for each screen row from the scroll position."""
+        out: list[tuple[int, int]] = []
+        ln, r = self.scroll_y, self.scroll_row
+        while len(out) < body_h and ln < len(self.lines):
+            n = self.nrows(ln)
+            while r < n and len(out) < body_h:
+                out.append((ln, r))
+                r += 1
+            ln, r = ln + 1, 0
+        return out
+
+    def clamp_scroll(self, body_h: int) -> None:
+        self.scroll_y = max(0, min(self.scroll_y, len(self.lines) - 1))
+        if self.scroll_row >= self.nrows(self.scroll_y):
+            self.scroll_row = 0
+        if self.wrap_mode == "preview":
+            return
+        cs, _x = self.cursor_seg()
+        if (self.cy, cs) < (self.scroll_y, self.scroll_row):
+            self.scroll_y, self.scroll_row = self.cy, cs
+            return
+        row = cs - self.scroll_row
+        for ln in range(self.scroll_y, self.cy):
+            row += self.nrows(ln)
+        while row >= body_h:          # pull the top down one row at a time
+            if self.scroll_row + 1 < self.nrows(self.scroll_y):
+                self.scroll_row += 1
+            else:
+                self.scroll_y, self.scroll_row = self.scroll_y + 1, 0
+            row -= 1
 
     def put(self, y: int, x: int, s: str, attr: int = 0, maxx: int | None = None) -> None:
         H, W = self.scr.getmaxyx()
@@ -1224,64 +1394,68 @@ class Editor:
         end = hi[1] if ln == hi[0] else len(self.lines[ln])
         return start, end
 
-    def draw_editor(self, top: int, body_h: int, edit_w: int,
-                    slines: list, widths: list[int]) -> None:
+    def draw_editor(self, top: int, edit_w: int, slines: list, widths: list[int],
+                    rows: list[tuple[int, int]]) -> None:
         c = self.colors
         site = self.site_editor
         fill = c.fill(site)
-        for row in range(body_h):
-            ln = self.scroll_y + row
-            y = top + row
+        for y, (ln, r) in enumerate(rows, start=top):
             if fill:
                 self.put(y, GUTTER_W, " " * edit_w, fill, maxx=GUTTER_W + edit_w)
-            if ln >= len(self.lines):
+            er, _pr = self.rows_of(ln)
+            if r == 0:
+                vw = widths[ln]
+                numattr = 0 if ln == self.cy else c.c("dim")
+                if vw > MAX_COLS:
+                    wattr = c.c("err")
+                elif vw >= NEAR_COLS:
+                    wattr = c.c("warn")
+                else:
+                    wattr = c.c("dim")
+                self.put(y, 0, f"{ln + 1:>3}", numattr)
+                self.put(y, 4, f"{vw:>3}", wattr)
+            if r >= len(er):
                 continue
-            vw = widths[ln]
-            numattr = 0 if ln == self.cy else c.c("dim")
-            if vw > MAX_COLS:
-                wattr = c.c("err")
-            elif vw >= NEAR_COLS:
-                wattr = c.c("warn")
-            else:
-                wattr = c.c("dim")
-            self.put(y, 0, f"{ln + 1:>3}", numattr)
-            self.put(y, 4, f"{vw:>3}", wattr)
+            a, b = er[r]
             sel = self.selection_cols(ln)
+            line_cells = slines[ln]
             cells = []
-            for i, (ch, st, _tag, w) in enumerate(slines[ln]):
-                a = c.attr(st, site)
+            for i in range(a, b):
+                ch, st, _tag, w = line_cells[i]
+                attr = c.attr(st, site)
                 if sel and sel[0] <= i <= sel[1]:
-                    a |= curses.A_REVERSE
-                cells.append((ch, a, w))
-            if sel and sel[1] >= len(self.lines[ln]) and ln < len(self.lines) - 1:
+                    attr |= curses.A_REVERSE
+                cells.append((ch, attr, w))
+            if (r == len(er) - 1 and sel and sel[1] >= len(self.lines[ln])
+                    and ln < len(self.lines) - 1):
                 cells.append((" ", c.attr(NORM, site) | curses.A_REVERSE, 1))
-            self.draw_cells(y, GUTTER_W, cells, edit_w, self.scroll_x)
+            self.draw_cells(y, GUTTER_W, cells, edit_w, 0)
 
-    def draw_preview(self, top: int, body_h: int, x0: int, width: int,
-                     slines: list) -> None:
+    def draw_preview(self, top: int, x0: int, width: int, slines: list,
+                     rows: list[tuple[int, int]]) -> None:
         c = self.colors
         site = self.site_preview
         fill = c.fill(site)
         dim = c.pair("dim", "bg" if site else None)
-        for row in range(body_h):
-            ln = self.scroll_y + row
-            y = top + row
+        for y, (ln, r) in enumerate(rows, start=top):
             if fill:
                 self.put(y, x0, " " * width, fill, maxx=x0 + width)
             if MAX_COLS < width:
                 self.put(y, x0 + MAX_COLS, "│", dim)
-            if ln >= len(self.lines):
+            _er, pr = self.rows_of(ln)
+            if r >= len(pr):
                 continue
+            a, b = pr[r]
             cells = []
             x = 0
-            for ch, st, tag, w in slines[ln]:
+            for ch, st, tag, w in slines[ln][a:b]:
                 if tag:
                     continue
                 cells.append((ch, c.attr(st, site, over=(x + w > MAX_COLS)), w))
                 x += w
             self.draw_cells(y, x0, cells, width, 0)
 
-    def draw_footer(self, y: int, W: int, widths: list[int], text: str) -> None:
+    def draw_footer(self, y: int, W: int, widths: list[int]) -> None:
         c = self.colors
         dim = c.c("dim")
         vw = widths[self.cy]
@@ -1300,13 +1474,13 @@ class Editor:
             x += len(s)
         self.put(y, x, "  │  ", dim)
         x += 5
-        over = build.overruns(text)
+        over = [(i + 1, w) for i, w in enumerate(widths) if w > MAX_COLS]
         if not over:
-            self.put(y, x, "no overruns", c.c("green"))
+            self.put(y, x, f"all lines fit {MAX_COLS}", c.c("green"))
         else:
             head = ", ".join(f"L{ln}={w}" for ln, w in over[:5])
             more = "…" if len(over) > 5 else ""
-            self.put(y, x, f"{len(over)} line(s) > {MAX_COLS}: {head}{more}", c.c("err"))
+            self.put(y, x, f"{len(over)} line(s) wrap at {MAX_COLS}: {head}{more}", c.c("warn"))
         if self.msg and time.time() < self.msg_until:
             self.put(y, max(x + 2, W - build.display_width(self.msg) - 1), self.msg, c.c("warn"))
 
@@ -1317,27 +1491,27 @@ class Editor:
         mode, edit_w, prev_x = self.layout(W)
         body_h = max(1, H - 2)
         self.body_h = body_h
-        self.clamp_scroll(body_h, edit_w)
-        text = self.text()
-        widths = build.line_widths(text)
-        slines = scan_lines(text)
+        self.wrap_w, self.wrap_mode = edit_w, mode
+        slines, widths, _cache = self.layout_cache()
+        self.clamp_scroll(body_h)
+        rows = self.visible_rows(body_h)
         self.draw_header(W)
         if mode in ("split", "edit"):
-            self.draw_editor(1, body_h, edit_w, slines, widths)
+            self.draw_editor(1, edit_w, slines, widths, rows)
         if mode == "split":
             sep = self.colors.c("dim")
             for row in range(body_h):
                 self.put(1 + row, GUTTER_W + edit_w, "│", sep)
-            self.draw_preview(1, body_h, prev_x, PREVIEW_W, slines)
+            self.draw_preview(1, prev_x, PREVIEW_W, slines, rows)
         elif mode == "preview":
-            self.draw_preview(1, body_h, 0, W, slines)
-        self.draw_footer(H - 1, W, widths, text)
+            self.draw_preview(1, 0, W, slines, rows)
+        self.draw_footer(H - 1, W, widths)
         if mode in ("split", "edit"):
-            cx = GUTTER_W + self.col_of(self.cy, self.cx) - self.scroll_x
+            cs, x = self.cursor_seg()
             try:
-                scr.move(1 + self.cy - self.scroll_y, cx)
+                scr.move(1 + rows.index((self.cy, cs)), GUTTER_W + min(x, edit_w - 1))
                 curses.curs_set(1)
-            except curses.error:
+            except (ValueError, curses.error):
                 pass
         else:
             try:
@@ -1480,8 +1654,16 @@ class Editor:
                 buf += k
 
     def show_text(self, title: str, rows: list, hint: str = "j/k scroll   q close",
-                  jumps: list[int] | None = None, top: int = 0) -> None:
-        """Scrollable read-only overlay."""
+                  jumps: list[int] | None = None, top: int = 0,
+                  enter_closes: bool = True) -> None:
+        """Scrollable read-only overlay.
+
+        Typeahead is dropped first: a key pressed while git was running must
+        not land here and close the result before it has been read.
+        `enter_closes=False` keeps a stray Enter from closing it either.
+        """
+        curses.flushinp()
+        closers = {"q", "esc", "f1", "^Q", "^C"} | ({"enter"} if enter_closes else set())
         while True:
             H, _ = self.scr.getmaxyx()
             page = max(1, H - 6)
@@ -1490,7 +1672,7 @@ class Editor:
             self.overlay(title, rows[top:top + page], hint)
             curses.doupdate()
             k = self.read_key(block=True)
-            if k in ("q", "esc", "f1", "^Q", "^C", "enter"):
+            if k in closers:
                 return
             if k in ("j", "down"):
                 top += 1
@@ -1536,9 +1718,17 @@ class Editor:
             return rows + [out]
         rows.append("content changes:" if out else "content is clean: nothing to publish")
         rows += ["  " + l for l in out.splitlines()]
+        drafts = sorted(DRAFTS.glob("*.txt")) if DRAFTS.is_dir() else []
+        if drafts:
+            rows += ["", "drafts (local only, never published; :post moves one to src/posts):"]
+            rows += ["  " + relpath(d) for d in drafts]
         code, ahead = git("rev-list", "--count", "@{u}..HEAD")
         if code == 0 and ahead.strip() not in ("", "0"):
-            rows += ["", f"{ahead.strip()} local commit(s) not pushed yet"]
+            rows += ["", f"{ahead.strip()} local commit(s) not pushed yet (:publish retries the push)"]
+        code, behind = git("rev-list", "--count", "HEAD..@{u}")
+        if code == 0 and behind.strip() not in ("", "0"):
+            rows += ["", f"{behind.strip()} commit(s) on origin not pulled yet (as of the last fetch);",
+                     "  run `git pull --rebase --autostash` in a shell before publishing"]
         code, log = git("log", "--oneline", "-5")
         if code == 0 and log:
             rows += ["", "recent commits:"] + ["  " + l for l in log.splitlines()]
@@ -1574,12 +1764,45 @@ class Editor:
         if code != 0:
             self.show_text("publish", [f"git error: {changes}"])
             return
+        draft_open = self.path is not None and self.path.parent == DRAFTS
+        if not changes and draft_open:
+            self.flash("draft saved, not published. :post moves it into src/posts first")
+            return
+        # know where origin is before committing anything on top of a stale main
+        self.flash("checking origin...", 30)
+        self.draw()
+        curses.doupdate()
+        code, out = git("fetch", "origin", DEPLOY_BRANCH, timeout=30)
+        self.msg_until = 0.0
+        if code != 0:
+            self.show_text("publish", log + ["can't reach origin; nothing committed or pushed.", ""]
+                           + ["  " + l for l in out.splitlines()], enter_closes=False)
+            return
+        code, behind = git("rev-list", "--count", f"HEAD..origin/{DEPLOY_BRANCH}")
+        behind = behind.strip() if code == 0 else "?"
+        if behind not in ("0", ""):
+            self.show_text("publish", log + [
+                f"origin/{DEPLOY_BRANCH} has {behind} commit(s) this clone doesn't, so a push",
+                "would be rejected. nothing committed or pushed.", "",
+                "in a shell:  git pull --rebase --autostash",
+                "then publish again."], enter_closes=False)
+            return
+        code, ahead = git("rev-list", "--count", f"origin/{DEPLOY_BRANCH}..HEAD")
+        ahead = ahead.strip() if code == 0 else "0"
         if not changes:
-            self.flash("nothing to publish: content matches the last commit")
+            # nothing new, but an earlier publish may have committed and failed to push
+            if ahead in ("", "0"):
+                self.flash("nothing to publish: the site matches the last commit")
+                return
+            if not self.confirm(f"content is clean, but {ahead} local commit(s) never made it to "
+                                f"{DEPLOY_BRANCH}. push now?"):
+                return
+            self.push_and_report(log)
             return
         msg = message or self.default_message()
         n = len(changes.splitlines())
-        if not self.confirm(f'commit "{msg}" ({n} file(s)) and push {DEPLOY_BRANCH}?'):
+        note = "  (the open draft stays out)" if draft_open else ""
+        if not self.confirm(f'commit "{msg}" ({n} file(s)) and push {DEPLOY_BRANCH}?{note}'):
             return
         log += ["changes:"] + ["  " + l for l in changes.splitlines()] + [""]
         code, out = git("add", "-A", "--", *CONTENT_PATHS)
@@ -1592,27 +1815,82 @@ class Editor:
             self.show_text("publish", log + ["", "commit failed; nothing pushed."])
             return
         log.append("")
+        self.push_and_report(log)
+
+    def push_and_report(self, log: list[str]) -> None:
+        """Push the deploy branch and show the outcome; a failure also lingers in the footer."""
         code, out = git("push", "origin", DEPLOY_BRANCH, timeout=90)
         log += ["push:"] + ["  " + l for l in (out.splitlines() or ["ok"])]
         if code != 0:
-            log += ["", "push failed; the commit is safe locally. run `git push` in a shell.",
+            log += ["", "push failed; the commit is safe locally and nothing is on the site yet.",
+                    "fix the cause, then :publish again to retry the push (F3 shows what's pending).",
                     "(a passphrase or login prompt can't happen inside the tui, so it fails fast.)"]
+            self.show_text("publish", log, enter_closes=False)
+            self.flash(f"push to {DEPLOY_BRANCH} FAILED: commit is local only. :publish retries", 8)
         else:
             log += ["", f"done. the server pulls {DEPLOY_BRANCH} within ~5 min."]
-        self.show_text("publish", log)
+            self.show_text("publish", log)
 
     # -- files ----------------------------------------------------------------
 
-    def new_post(self, slug: str | None = None) -> None:
+    def new_draft(self, slug: str | None = None) -> None:
+        """Start a post as src/drafts/<slug>.txt; :post moves it into src/posts."""
         if slug is None:
-            slug = self.prompt("new post slug (lowercase-with-dashes): ")
+            slug = self.prompt("new draft slug (lowercase-with-dashes): ")
         if not slug:
             return
         if not POST_SLUG_RE.match(slug):
             self.flash("bad slug: lowercase letters, digits, - and _ only")
             return
-        path = POSTS / f"{date.today().isoformat()}-{slug}.txt"
-        self.create_and_open(path, POST_SEED)
+        self.create_and_open(DRAFTS / f"{slug}.txt", POST_SEED)
+
+    def relocate(self, src: Path, dst: Path) -> bool:
+        """Move a content file (draft <-> post), saving it first if it's open."""
+        if dst.exists():
+            self.flash(f"already exists: {relpath(dst)}")
+            return False
+        if src == self.path and self.dirty and not self.save():
+            return False
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        src.rename(dst)
+        if src == self.path:
+            self.path = dst
+        return True
+
+    def post_draft(self, target: Path | None = None, when: str | None = None) -> None:
+        """Move a draft into src/posts as <date>-<slug>.txt (date defaults to today)."""
+        src = target or self.path
+        if src is None or src.parent != DRAFTS:
+            self.flash("not a draft (drafts live in src/drafts; ^N / :new starts one)")
+            return
+        when = when or date.today().isoformat()
+        try:
+            date.fromisoformat(when)
+        except ValueError:
+            self.flash("usage: post [YYYY-MM-DD]")
+            return
+        dst = POSTS / f"{when}-{DATE_PREFIX_RE.sub('', src.stem)}.txt"
+        if dst.exists():
+            self.flash(f"already exists: {relpath(dst)}")
+            return
+        n = self.hard_wrap_file(src)
+        if self.relocate(src, dst):
+            wrapped = f", {n} long line(s) wrapped at {MAX_COLS}" if n else ""
+            self.flash(f"now a post: {relpath(dst)}{wrapped}   (:publish pushes it live)")
+
+    def unpost(self, target: Path | None = None) -> None:
+        """Move a post back into src/drafts (the next publish drops it from the site)."""
+        src = target or self.path
+        if src is None or src.parent != POSTS:
+            self.flash("not a post")
+            return
+        dst = DRAFTS / f"{DATE_PREFIX_RE.sub('', src.stem)}.txt"
+        tracked = git("ls-files", "--error-unmatch", "--", str(src))[0] == 0
+        if tracked and not self.confirm(
+                f"unpost {src.name}? it is live; the next publish removes it from the site"):
+            return
+        if self.relocate(src, dst):
+            self.flash(f"now a draft: {relpath(dst)}   (not built, not published)")
 
     def new_page(self, slug: str | None = None) -> None:
         if slug is None:
@@ -1653,7 +1931,7 @@ class Editor:
         entries = list_entries()
         if self.path in entries:
             sel = entries.index(self.path)
-        hint = "enter open  n new post  N new page  d delete  esc"
+        hint = "enter open  n new draft  N new page  p post/unpost  d delete  esc"
         while True:
             entries = list_entries()
             sel = max(0, min(sel, len(entries) - 1)) if entries else 0
@@ -1690,9 +1968,17 @@ class Editor:
                 return
             elif k == "n":
                 before = self.path
-                self.new_post()
+                self.new_draft()
                 if self.path is not None and self.path != before:
                     return
+            elif k == "p" and entries:
+                target = entries[sel]
+                if target.parent == DRAFTS:
+                    self.post_draft(target)
+                elif target.parent == POSTS:
+                    self.unpost(target)
+                else:
+                    self.flash("pages don't have drafts")
             elif k == "N":
                 before = self.path
                 self.new_page()
@@ -1740,7 +2026,7 @@ class Editor:
         elif k == "^O":
             self.picker()
         elif k == "^N":
-            self.new_post()
+            self.new_draft()
         elif k == "^P":
             self.toggle_preview()
         elif k == "f1":
@@ -1774,6 +2060,7 @@ class Editor:
             self.picker()
         else:
             self.flash("preview: ^P back to editing")
+        self.scroll_row = 0
         self.cy = max(self.scroll_y, min(self.cy, self.scroll_y + self.body_h - 1))
         self.clamp_cursor()
         self.collapse()
@@ -1797,6 +2084,8 @@ class Editor:
                 self.search(self.search_pat)
             else:
                 self.flash("no search yet (^F)")
+        elif k == "^Y":
+            self.copy_clipboard()
         elif k == "enter":
             self.newline()
         elif k == "backspace":
@@ -1996,6 +2285,8 @@ class Editor:
         elif p == "space":
             if k == "f":
                 self.picker()
+            elif k == "y":
+                self.copy_clipboard()
         elif p in ("f", "t", "F", "T"):
             if k == "space" or (len(k) == 1 and k >= " "):
                 self.find_char(" " if k == "space" else k, p, count or 1, ext)
@@ -2119,6 +2410,23 @@ class Editor:
         self.insert_text(off, reg, select=True)
         self.mode = "normal"
 
+    def copy_clipboard(self) -> None:
+        """Send the selection (ctrl keys: the current line) to the system
+        clipboard, and yank it so p pastes the same text."""
+        if self.keys == "helix":
+            text = self.sel_text()
+            what = f"{len(text)} chars"
+        else:
+            text = self.lines[self.cy] + "\n"
+            what = f"line {self.cy + 1}"
+        self.register = text
+        tool = clipboard_copy(text)
+        if tool:
+            self.flash(f"copied {what} to the clipboard via {tool}")
+        else:
+            self.flash("no clipboard tool on PATH (clip.exe / pbcopy / wl-copy / xclip)")
+        self.mode = "normal"
+
     def join_lines(self, n: int) -> None:
         lo, hi = self.sel_range()
         y0, y1 = lo[0], hi[0]
@@ -2165,6 +2473,61 @@ class Editor:
         b = min(len(text), self.off(*hi) + 1)
         self.set_text(text[:a] + text[a:b].swapcase() + text[b:])
 
+    def hard_wrap(self, y0: int, y1: int) -> int:
+        """Hard-wrap the lines y0..y1 (inclusive) that are wider than 64, in
+        the buffer, exactly as the preview shows them. Returns how many."""
+        y0, y1 = max(0, y0), min(y1, len(self.lines) - 1)
+        text = self.text()
+        mask = build.tag_mask(text)
+        out: list[str] = []
+        pos, n, new_cy = 0, 0, self.cy
+        for i, line in enumerate(self.lines):
+            m = mask[pos:pos + len(line)]
+            pos += len(line) + 1
+            rows = build.wrap_line(line, m) if y0 <= i <= y1 else [line]
+            if len(rows) > 1:
+                n += 1
+                if i < self.cy:
+                    new_cy += len(rows) - 1     # the cursor's line moved down
+                elif i == self.cy:
+                    self.cx = 0                 # its own line got split: start of it
+            out.extend(rows)
+        if not n:
+            return 0
+        self.snapshot("wrap", group=False)
+        self.lines = out
+        self.cy = new_cy
+        self.clamp_cursor()
+        self.collapse()
+        self.mode = "normal"
+        return n
+
+    def hard_wrap_file(self, path: Path) -> int:
+        """Hard-wrap a post's long body lines: in the buffer if it's open, else on disk."""
+        if path == self.path:
+            return self.hard_wrap(2, len(self.lines) - 1)
+        text = path.read_text(encoding="utf-8")
+        n = sum(1 for ln, _w in build.overruns(text) if ln > 2)
+        if n:
+            with open(path, "w", encoding="utf-8", newline="\n") as f:
+                f.write(build.wrap_text(text, first=2))
+        return n
+
+    def fmt(self, arg: str | None = None) -> None:
+        """:fmt hard-wraps the selected lines (a lone cursor: this line); :fmt all, the file."""
+        if arg == "all":
+            is_post = self.path is not None and self.path.parent in (POSTS, DRAFTS)
+            y0, y1 = (2 if is_post else 0), len(self.lines) - 1
+        elif arg:
+            self.flash("usage: fmt [all]")
+            return
+        else:
+            lo, hi = self.sel_range()
+            y0, y1 = lo[0], hi[0]
+        n = self.hard_wrap(y0, y1)
+        self.flash(f"wrapped {n} long line(s) at {MAX_COLS}" if n
+                   else f"nothing to wrap: those lines fit {MAX_COLS}")
+
     def run_command(self, cmd: str) -> None:
         parts = cmd.split()
         name, args = parts[0], parts[1:]
@@ -2187,8 +2550,14 @@ class Editor:
                 self.open_arg(args[0])
             else:
                 self.picker()
-        elif name == "new":
-            self.new_post(args[0] if args else None)
+        elif name in ("new", "draft"):
+            self.new_draft(args[0] if args else None)
+        elif name == "post":
+            self.post_draft(when=args[0] if args else None)
+        elif name == "unpost":
+            self.unpost()
+        elif name in ("fmt", "wrap"):
+            self.fmt(args[0] if args else None)
         elif name in ("page", "new-page"):
             self.new_page(args[0] if args else None)
         elif name in ("p", "preview"):
@@ -2206,6 +2575,8 @@ class Editor:
             self.publish(" ".join(args) if args else None)
         elif name in ("status", "st"):
             self.status()
+        elif name in ("copy", "clip"):
+            self.copy_clipboard()
         elif name in ("h", "help"):
             self.help(args[0] if args else None)
         else:
@@ -2261,7 +2632,8 @@ def cli() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("args", nargs="*", metavar="FILE | new SLUG | page SLUG",
-                    help="a file under src/pages or src/posts, or new/page + slug")
+                    help="a file under src/pages, src/drafts or src/posts; "
+                         "new SLUG starts a draft, page SLUG a page")
     ap.add_argument("--keys", choices=("ctrl", "helix"))
     ap.add_argument("--preview", choices=("site", "terminal"))
     ap.add_argument("--editor", choices=("site", "terminal"))
@@ -2298,14 +2670,14 @@ def cli() -> None:
 
     path: Path | None = None
     try:
-        if a.args and a.args[0] in ("new", "page"):
+        if a.args and a.args[0] in ("new", "draft", "page"):
             if len(a.args) != 2:
                 sys.exit(f"usage: {ap.prog} {a.args[0]} SLUG")
             slug = a.args[1]
-            if a.args[0] == "new":
+            if a.args[0] in ("new", "draft"):
                 if not POST_SLUG_RE.match(slug):
                     sys.exit("error: slug must be lowercase letters, digits, - or _")
-                path = POSTS / f"{date.today().isoformat()}-{slug}.txt"
+                path = DRAFTS / f"{slug}.txt"
             else:
                 if not PAGE_SLUG_RE.match(slug):
                     sys.exit("error: page slug must start with a letter; lowercase, digits, - or _")

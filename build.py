@@ -64,9 +64,116 @@ def overruns(text: str, limit: int = MAX_COLS) -> list[tuple[int, int]]:
     return [(i + 1, w) for i, w in enumerate(line_widths(text)) if w > limit]
 
 
-def warn_overruns(label: str, text: str) -> None:
+# ---- wrapping ---------------------------------------------------------------
+# A source line wider than MAX_COLS is hard-wrapped at word boundaries when the
+# site is built (and by the editor's :post / :fmt). Continuation lines start at
+# column 0: a leading indent belongs to the first line only. Lines that fit are
+# never touched, so hand-formatted text is safe and a draft can keep each
+# paragraph on one long line. tools/tui.py soft-wraps with the
+# same wrap_rows() so the preview shows exactly what the build will do.
+
+def tag_mask(text: str) -> list[bool]:
+    """True for every character that is DSL markup rather than visible text."""
+    mask = [False] * len(text)
+    for rx, grp in ((SPAN_RE, 2), (TRANS_RE, 1), (LINK_RE, 1)):
+        for m in rx.finditer(text):
+            a, b = m.span()
+            ia, ib = m.span(grp)
+            for i in range(a, ia):
+                mask[i] = True
+            for i in range(ib, b):
+                mask[i] = True
+    return mask
+
+
+def wrap_rows(widths: list[int], spaces: list[bool], limit: int) -> list[tuple[int, int]]:
+    """Greedy word wrap over a row of items (characters, usually).
+
+    widths[i] is the cell width of item i (0 for markup); spaces[i] says
+    whether it is a breakable space. Returns (start, end) index ranges, one
+    per output row, each at most `limit` cells wide. The spaces a row breaks on are
+    dropped: `end` stops before them and the next row starts after them. A
+    run with no space in it that is wider than the room is cut at the room.
+    Something that fits comes back as a single range.
+    """
+    n = len(widths)
+    if n == 0:
+        return [(0, 0)]
+    rows: list[tuple[int, int]] = []
+    start = 0
+    while start < n:
+        x, bp, content, end = 0, -1, False, None
+        i = start
+        while i < n:
+            w = widths[i]
+            if x + w > limit and (content or x > 0):
+                if spaces[i] and content:
+                    end = i            # break right here, dropping this space
+                elif bp > start:
+                    end = bp           # back to the last space
+                else:
+                    end = i            # one unbreakable run: cut it
+                break
+            if spaces[i]:
+                if content:
+                    bp = i
+            elif w > 0:
+                content = True
+            x += w
+            i += 1
+        if end is None:
+            rows.append((start, n))
+            break
+        nxt = end
+        while end > start and spaces[end - 1]:
+            end -= 1
+        rows.append((start, end))
+        while nxt < n and spaces[nxt]:
+            nxt += 1
+        if nxt >= n:
+            break
+        start = nxt
+    return rows
+
+
+def wrap_line(line: str, mask: list[bool], limit: int = MAX_COLS) -> list[str]:
+    """Hard-wrap one source line; a line that fits comes back as is."""
+    widths = [0 if t else char_width(c) for c, t in zip(line, mask)]
+    if sum(widths) <= limit:
+        return [line]
+    spaces = [c == " " and not t for c, t in zip(line, mask)]
+    return [line[a:b].rstrip(" ") for a, b in wrap_rows(widths, spaces, limit)]
+
+
+def wrap_text(text: str, limit: int = MAX_COLS, first: int = 0,
+              last: int | None = None) -> str:
+    """Hard-wrap every line wider than `limit` visible columns.
+
+    Only lines `first`..`last` (0-based, inclusive) are candidates; the rest
+    pass through. Markup is measured across the whole text, so a span or a
+    link that already straddles lines is still zero width.
+    """
+    mask = tag_mask(text)
+    out: list[str] = []
+    pos = 0
+    for i, line in enumerate(text.split("\n")):
+        m = mask[pos:pos + len(line)]
+        pos += len(line) + 1
+        if i < first or (last is not None and i > last):
+            out.append(line)
+        else:
+            out.extend(wrap_line(line, m, limit))
+    return "\n".join(out)
+
+
+def wrap_source(label: str, text: str, first: int = 0) -> str:
+    """The build's safety net: wrap long lines (from line index `first`) and say so."""
     for ln, w in overruns(text):
-        print(f"  warn: {label} L{ln} is {w} cols (max {MAX_COLS})")
+        if ln - 1 >= first:
+            print(f"  wrap: {label} L{ln} is {w} cols; wrapped at {MAX_COLS}")
+        else:
+            print(f"  warn: {label} L{ln} is {w} cols (max {MAX_COLS})")
+    return wrap_text(text, first=first)
 
 
 def truncate_to(s: str, width: int, ellipsis: str = "\u2026") -> str:
@@ -170,7 +277,7 @@ def render_page(template: str, config: dict, current_slug: str, body: str) -> st
 
 def build_page(slug: str, config: dict, template: str) -> None:
     src = (SRC / "pages" / f"{slug}.txt").read_text(encoding="utf-8")
-    warn_overruns(f"pages/{slug}.txt", src)
+    src = wrap_source(f"pages/{slug}.txt", src)
     body = render_source(src)
     body = body.replace("{systems}", SYSTEMS_PLACEHOLDER)
 
@@ -196,7 +303,7 @@ def discover_posts() -> list[dict]:
             continue
         date, slug = m.group(1), m.group(2)
         text = path.read_text(encoding="utf-8")
-        warn_overruns(f"posts/{path.name}", text)
+        text = wrap_source(f"posts/{path.name}", text, first=2)   # the title is not wrapped
         lines = text.splitlines()
         title = lines[0].strip() if lines else slug
         body = "\n".join(lines[2:]) if len(lines) > 2 else ""
