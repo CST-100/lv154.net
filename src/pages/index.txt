@@ -45,6 +45,10 @@ and PNT and learned a lot from that! but shelved entering 2026.
   since june 2026, we've been working on generation 2 in-space
 computing using incandescent-hot analog devices. if that sounds
 like your kind of thing, we should definitely talk.
+
+  also, i volunteer with [CRASH Space](https://blog.crashspace.org), an LA maker/hackerspace.
+if you're in the area and like getting your hands dirty, come
+on down sometime!
  
 
 // signal and noise                                           {d}03{/d}
